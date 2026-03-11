@@ -57,10 +57,22 @@ a:hover {
 }
 
 .brand {
-  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 400;
   font-size: 0.93rem;
   text-decoration: none;
   color: var(--text);
+}
+
+.brand-bold {
+  font-weight: 700;
+}
+
+.brand-logo {
+  width: 64px;
+  height: 64px;
 }
 
 .brand:hover {
