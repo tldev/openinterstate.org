@@ -6,9 +6,11 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "deploy": "wrangler deploy --config wrangler.jsonc --domains openinterstate.org --domains www.openinterstate.org"
   },
   "devDependencies": {
-    "astro": "^5.14.0"
+    "astro": "^5.14.0",
+    "wrangler": "4.72.0"
   }
 }

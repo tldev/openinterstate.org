@@ -5,9 +5,9 @@ Website and docs for OpenInterstate.
 ## Stack
 
 - Astro
-- static-first pages
+- Cloudflare Workers static asset delivery
 
-## Pages
+## Site
 
 1. home
 2. data
@@ -22,4 +22,19 @@ Website and docs for OpenInterstate.
 ```bash
 npm install
 npm run dev
+```
+
+## Production Build
+
+```bash
+npm run build
+```
+
+## Deployment
+
+Production deploys target the `openinterstate.org` and `www.openinterstate.org`
+custom domains through a Cloudflare Worker that serves the static Astro build.
+
+```bash
+npm run deploy
 ```
