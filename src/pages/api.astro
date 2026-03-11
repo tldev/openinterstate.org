@@ -2,41 +2,47 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 
 const endpoints = [
-  "GET /v1/releases",
-  "GET /v1/releases/latest",
-  "GET /v1/corridors",
-  "GET /v1/corridors/{corridor_id}",
-  "GET /v1/exits/{exit_id}",
-  "GET /v1/exits/{exit_id}/places",
-  "GET /v1/reference-routes",
-  "GET /v1/reference-routes/{reference_route_id}"
+  ["GET", "/v1/releases"],
+  ["GET", "/v1/releases/latest"],
+  ["GET", "/v1/corridors"],
+  ["GET", "/v1/corridors/:corridor_id"],
+  ["GET", "/v1/exits/:exit_id"],
+  ["GET", "/v1/exits/:exit_id/places"],
+  ["GET", "/v1/reference-routes"],
+  ["GET", "/v1/reference-routes/:id"],
 ];
 ---
 
-<BaseLayout title="API | OpenInterstate">
-  <section class="page-intro">
-    <p class="kicker">API</p>
-    <h1>Read-only lookup and discovery.</h1>
-    <p class="lead">
-      The API is planned as a stable, read-only surface over release-backed data. Static
-      releases come first; the API follows the published contract.
+<BaseLayout title="API — OpenInterstate">
+  <section>
+    <h1>API</h1>
+    <p>
+      Read-only lookup and discovery over release-backed data. Static releases
+      come first; the API follows the published contract.
     </p>
   </section>
 
-  <section class="section">
-    <div class="band">
-      <p class="kicker">Initial endpoints</p>
-      <ul class="list-clean">
-        {endpoints.map((endpoint) => (
-          <li><code>{endpoint}</code></li>
+  <section>
+    <h2>Endpoints</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th>Path</th>
+        </tr>
+      </thead>
+      <tbody>
+        {endpoints.map(([method, path]) => (
+          <tr>
+            <td>{method}</td>
+            <td>{path}</td>
+          </tr>
         ))}
-      </ul>
-      <p>
-        Draft spec:
-        <a href="https://github.com/tldev/openinterstate/blob/main/api/openapi.yaml">
-          api/openapi.yaml
-        </a>
-      </p>
-    </div>
+      </tbody>
+    </table>
+    <p>
+      Draft spec:
+      <a href="https://github.com/tldev/openinterstate/blob/main/api/openapi.yaml">api/openapi.yaml</a>
+    </p>
   </section>
 </BaseLayout>

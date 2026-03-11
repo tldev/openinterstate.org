@@ -14,32 +14,29 @@ import "../styles/global.css";
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
     <link
-      href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,700&family=Space+Grotesk:wght@400;500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap"
       rel="stylesheet"
     />
   </head>
   <body>
-    <div class="page-shell">
-      <header class="site-header">
-        <a class="brand" href="/">OpenInterstate</a>
-        <nav class="site-nav">
-          <a href="/data">Data</a>
-          <a href="/api">API</a>
-          <a href="/docs">Docs</a>
-          <a href="/releases">Releases</a>
-          <a href="/about">About</a>
-          <a href="/contribute">Contribute</a>
+    <div class="shell">
+      <header class="header">
+        <a class="brand" href="/">openinterstate</a>
+        <nav>
+          <a href="/data">data</a>
+          <a href="/api">api</a>
+          <a href="/docs">docs</a>
+          <a href="/releases">releases</a>
+          <a href="/about">about</a>
+          <a href="/contribute">contribute</a>
         </nav>
       </header>
       <main>
         <slot />
       </main>
-      <footer class="site-footer">
-        <p>OpenInterstate turns raw OSM-derived inputs into a usable interstate system data layer.</p>
-        <p>
-          Project repo:
-          <a href="https://github.com/tldev/openinterstate">github.com/tldev/openinterstate</a>
-        </p>
+      <footer class="footer">
+        <p><a href="https://github.com/tldev/openinterstate">github.com/tldev/openinterstate</a></p>
+        <p>Data derived from <a href="https://www.openstreetmap.org/">OpenStreetMap</a>. ODbL.</p>
       </footer>
     </div>
   </body>

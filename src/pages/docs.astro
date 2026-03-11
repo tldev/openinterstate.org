@@ -2,38 +2,43 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 
 const docs = [
-  ["Project charter", "Mission, scope, and Pike boundary."],
-  ["Naming glossary", "Preferred public nouns and what to avoid."],
-  ["Data contract draft", "The current public release surface."],
-  ["Release format", "Manifest and file-layout expectations."],
-  ["Release build guide", "How the current v1 release is exported from Pike/Postgres."],
-  ["Licensing and attribution", "Working assumptions and launch requirements."]
+  ["Project charter", "Mission, scope, and Pike boundary"],
+  ["Naming glossary", "Preferred public nouns and what to avoid"],
+  ["Data contract", "The current public release surface"],
+  ["Release format", "Manifest and file-layout expectations"],
+  ["Release build guide", "How v1 is exported from Pike/Postgres"],
+  ["Licensing and attribution", "Working assumptions and launch requirements"],
 ];
 ---
 
-<BaseLayout title="Docs | OpenInterstate">
-  <section class="page-intro">
-    <p class="kicker">Docs</p>
-    <h1>Project docs before platform sprawl.</h1>
-    <p class="lead">
-      OpenInterstate starts with explicit docs because the public contract matters more than
-      the stack choice. The docs live in the main repository and are mirrored here.
+<BaseLayout title="Docs — OpenInterstate">
+  <section>
+    <h1>Documentation</h1>
+    <p>
+      Docs live in the main repository. The public contract matters more than
+      the stack choice.
     </p>
   </section>
 
-  <section class="section">
-    <div class="card-grid">
-      {docs.map(([title, description]) => (
-        <article class="card">
-          <h3>{title}</h3>
-          <p>{description}</p>
-        </article>
-      ))}
-    </div>
-    <div class="actions">
-      <a class="button button-primary" href="https://github.com/tldev/openinterstate/tree/main/docs">
-        Browse docs in GitHub
-      </a>
-    </div>
+  <section>
+    <table>
+      <thead>
+        <tr>
+          <th>Document</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {docs.map(([title, desc]) => (
+          <tr>
+            <td>{title}</td>
+            <td>{desc}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+    <p>
+      <a href="https://github.com/tldev/openinterstate/tree/main/docs">Browse all docs on GitHub →</a>
+    </p>
   </section>
 </BaseLayout>

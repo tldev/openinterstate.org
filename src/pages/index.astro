@@ -1,141 +1,97 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 
-const datasets = [
-  "Directional interstate corridors",
-  "Normalized exits and aliases",
-  "Linked places and reachability scores",
-  "Reference routes for QA and exploration"
-];
-
-const useCases = [
-  "Route-aware travel and mapping apps",
-  "GIS analysis of interstate corridors and exits",
-  "Reference datasets for hobbyist or academic projects"
-];
-
-const latestRelease = {
+const release = {
   tag: "release-2026-03-11-standalone",
   archiveUrl:
     "https://github.com/tldev/openinterstate/releases/download/release-2026-03-11-standalone/openinterstate-release-2026-03-11-standalone.tar.gz",
-  manifestUrl:
-    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-11-standalone/manifest.json",
-  sourceLineageUrl:
-    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-11-standalone/source_lineage.json",
-  checksumsUrl:
-    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-11-standalone/checksums.txt",
-  stats: [
-    "564 corridors",
-    "40,709 corridor edges",
-    "36,195 corridor exits",
-    "101,363 places"
-  ]
 };
+
+const tables = [
+  ["corridors", "Contiguous directional interstate corridors"],
+  ["corridor_edges", "Graph edges assigned to corridors"],
+  ["corridor_exits", "Normalized exits linked to a corridor"],
+  ["exit_aliases", "Source exit aliases mapped to normalized exits"],
+  ["places", "Reachable places and services"],
+  ["exit_place_links", "Relationships between exits and places"],
+  ["exit_place_scores", "Reachability and ranking metadata"],
+  ["reference_routes", "Routes for QA, examples, and exploration"],
+];
 ---
 
-<BaseLayout title="OpenInterstate" description="Open interstate system data for the United States.">
-  <section class="hero">
-    <div class="hero-copy">
-      <div class="eyebrow">Public data layer</div>
-      <h1>Open interstate system data for the United States.</h1>
-      <p class="lead">
-        OpenInterstate turns raw OpenStreetMap inputs into usable interstate datasets:
-        directional corridors, normalized exits, linked services, and reference routes.
-      </p>
-      <div class="actions">
-        <a class="button button-primary" href="/releases">Download the latest release</a>
-        <a class="button button-secondary" href="/docs">Read the docs</a>
-      </div>
-    </div>
-
-    <aside class="hero-panel">
-      <p class="kicker">Release shape</p>
-      <h3>Built for people who need usable interstate structure, not just raw road files.</h3>
-      <div class="stat-grid">
-        <div class="card">
-          <p class="kicker">Current v1 format</p>
-          <h3>CSV tables</h3>
-          <p>Immediate, low-friction access to the first public release.</p>
-        </div>
-        <div class="card">
-          <p class="kicker">Included extras</p>
-          <h3>GPX + GeoJSON</h3>
-          <p>Reference routes, sample extracts, and examples for fast onboarding.</p>
-        </div>
-      </div>
-    </aside>
+<BaseLayout>
+  <section>
+    <h1>Structured US interstate data from OpenStreetMap</h1>
+    <p>
+      Directional corridors, normalized exits, linked places, and reference
+      routes — derived from raw OSM and published as dated, checksummed releases.
+    </p>
   </section>
 
-  <section class="section">
-    <div class="section-head">
+  <section>
+    <div class="stats">
       <div>
-        <p class="kicker">What you get</p>
-        <h2>Derived data products that are ready to work with.</h2>
+        <div class="stat-val">564</div>
+        <div class="stat-lbl">corridors</div>
       </div>
-      <p>Raw OSM is the source. OpenInterstate is the usable layer on top of it.</p>
-    </div>
-    <div class="card-grid">
-      {datasets.map((item) => (
-        <article class="card">
-          <h3>{item}</h3>
-          <p>Documented, named, and intended to be consumed outside a single product.</p>
-        </article>
-      ))}
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="band">
-      <p class="kicker">Why this exists</p>
-      <h2>The hard part is not downloading a road file.</h2>
-      <p class="lead">
-        The hard part is turning raw map data into a coherent model of the U.S. Interstate
-        System. OpenInterstate publishes the corridor, exit, place, and route artifacts that
-        teams usually have to derive themselves.
-      </p>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="section-head">
       <div>
-        <p class="kicker">Latest release</p>
-        <h2>v1 is public now.</h2>
+        <div class="stat-val">36,195</div>
+        <div class="stat-lbl">exits</div>
       </div>
-      <a href="/releases">Open release details</a>
-    </div>
-    <div class="card-grid">
-      <article class="card">
-        <h3>{latestRelease.tag}</h3>
-        <p>Built by the standalone OpenInterstate pipeline from the raw U.S. OSM PBF, with published lineage for both the source file and imported canonical filter.</p>
-        <div class="actions">
-          <a class="button button-primary" href={latestRelease.archiveUrl}>Download archive</a>
-          <a class="button button-secondary" href={latestRelease.manifestUrl}>Manifest</a>
-        </div>
-        <p><a href={latestRelease.sourceLineageUrl}>source_lineage.json</a> · <a href={latestRelease.checksumsUrl}>checksums.txt</a></p>
-      </article>
-      {latestRelease.stats.map((stat) => (
-        <article class="card">
-          <h3>{stat}</h3>
-        </article>
-      ))}
+      <div>
+        <div class="stat-val">101,363</div>
+        <div class="stat-lbl">places</div>
+      </div>
+      <div>
+        <div class="stat-val">250</div>
+        <div class="stat-lbl">reference routes</div>
+      </div>
     </div>
   </section>
 
-  <section class="section">
-    <div class="section-head">
-      <div>
-        <p class="kicker">Use cases</p>
-        <h2>Useful to developers first.</h2>
-      </div>
-      <a href="https://github.com/tldev/openinterstate">View the repo</a>
-    </div>
-    <div class="mini-grid">
-      {useCases.map((item) => (
-        <article class="card">
-          <h3>{item}</h3>
-        </article>
-      ))}
-    </div>
+  <hr />
+
+  <section>
+    <h2>Get the data</h2>
+    <pre><code>curl -LO \
+  {release.archiveUrl}</code></pre>
+    <p>
+      Or <a href="/releases">browse releases</a> for manifests, checksums, and lineage files.
+    </p>
+  </section>
+
+  <hr />
+
+  <section>
+    <h2>What's in a release</h2>
+    <p>CSV tables, GPX reference routes, and GeoJSON examples.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Table</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {tables.map(([name, desc]) => (
+          <tr>
+            <td>{name}</td>
+            <td>{desc}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </section>
+
+  <hr />
+
+  <section>
+    <h2>Links</h2>
+    <ul class="links">
+      <li><a href="https://github.com/tldev/openinterstate">GitHub</a></li>
+      <li><a href="/docs">Documentation</a></li>
+      <li><a href="/api">API reference</a></li>
+      <li><a href="/data">Data model</a></li>
+    </ul>
   </section>
 </BaseLayout>

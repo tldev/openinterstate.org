@@ -11,42 +11,42 @@ const release = {
     "https://github.com/tldev/openinterstate/releases/download/release-2026-03-11-standalone/source_lineage.json",
   checksumsUrl:
     "https://github.com/tldev/openinterstate/releases/download/release-2026-03-11-standalone/checksums.txt",
-  githubReleaseUrl: "https://github.com/tldev/openinterstate/releases/tag/release-2026-03-11-standalone"
+  githubUrl:
+    "https://github.com/tldev/openinterstate/releases/tag/release-2026-03-11-standalone",
 };
 ---
 
-<BaseLayout title="Releases | OpenInterstate">
-  <section class="page-intro">
-    <p class="kicker">Releases</p>
-    <h1>Dated, documented, and checksummed.</h1>
-    <p class="lead">
-      Public releases are the primary product surface. The first public release is now available
-      and is backed by a manifest, checksums, and explicit dataset counts.
-    </p>
+<BaseLayout title="Releases — OpenInterstate">
+  <section>
+    <h1>Releases</h1>
+    <p>Dated, checksummed, with published lineage.</p>
   </section>
 
-  <section class="section">
-    <div class="card-grid">
-      <article class="card">
-        <p class="kicker">Latest</p>
-        <h3>{release.tag}</h3>
-        <p>564 corridors, 36,195 corridor exits, 101,363 places, and 250 reference routes rebuilt from the raw U.S. OSM PBF with standalone OpenInterstate tooling.</p>
-        <div class="actions">
-          <a class="button button-primary" href={release.archiveUrl}>Download release archive</a>
-          <a class="button button-secondary" href={release.githubReleaseUrl}>GitHub release</a>
-        </div>
-      </article>
-      <article class="card">
-        <p class="kicker">Formats</p>
-        <h3>CSV + GPX + GeoJSON</h3>
-        <p>The v1 release favors immediate usability and a stable public release path over stricter packaging.</p>
-      </article>
-      <article class="card">
-        <p class="kicker">Lineage</p>
-        <h3>Raw source and import hashes</h3>
-        <p>The release publishes raw-source and imported-filter provenance alongside the machine-readable manifest.</p>
-        <p><a href={release.manifestUrl}>manifest.json</a> · <a href={release.sourceLineageUrl}>source_lineage.json</a> · <a href={release.checksumsUrl}>checksums.txt</a></p>
-      </article>
-    </div>
+  <section>
+    <h2>{release.tag}</h2>
+    <p>
+      564 corridors, 36,195 exits, 101,363 places, 250 reference routes.
+      Built from the raw U.S. OSM PBF with standalone OpenInterstate tooling.
+    </p>
+
+    <pre><code>curl -LO \
+  {release.archiveUrl}</code></pre>
+
+    <h3>Artifacts</h3>
+    <ul class="links">
+      <li><a href={release.archiveUrl}>Release archive (.tar.gz)</a></li>
+      <li><a href={release.manifestUrl}>manifest.json</a></li>
+      <li><a href={release.sourceLineageUrl}>source_lineage.json</a></li>
+      <li><a href={release.checksumsUrl}>checksums.txt</a></li>
+      <li><a href={release.githubUrl}>GitHub release page</a></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Format</h2>
+    <p>
+      CSV tables + GPX reference routes + GeoJSON examples. V1 favors usability
+      over stricter packaging.
+    </p>
   </section>
 </BaseLayout>
