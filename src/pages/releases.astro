@@ -2,14 +2,16 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 
 const release = {
-  tag: "release-2026-03-11",
+  tag: "release-2026-03-11-standalone",
   archiveUrl:
-    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-11/openinterstate-release-2026-03-11.tar.gz",
+    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-11-standalone/openinterstate-release-2026-03-11-standalone.tar.gz",
   manifestUrl:
-    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-11/manifest.json",
+    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-11-standalone/manifest.json",
+  sourceLineageUrl:
+    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-11-standalone/source_lineage.json",
   checksumsUrl:
-    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-11/checksums.txt",
-  githubReleaseUrl: "https://github.com/tldev/openinterstate/releases/tag/release-2026-03-11"
+    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-11-standalone/checksums.txt",
+  githubReleaseUrl: "https://github.com/tldev/openinterstate/releases/tag/release-2026-03-11-standalone"
 };
 ---
 
@@ -28,7 +30,7 @@ const release = {
       <article class="card">
         <p class="kicker">Latest</p>
         <h3>{release.tag}</h3>
-        <p>563 corridors, 68,881 corridor exits, 101,522 places, and 250 reference routes filtered to strict interstate naming.</p>
+        <p>564 corridors, 36,195 corridor exits, 101,363 places, and 250 reference routes rebuilt from the raw U.S. OSM PBF with standalone OpenInterstate tooling.</p>
         <div class="actions">
           <a class="button button-primary" href={release.archiveUrl}>Download release archive</a>
           <a class="button button-secondary" href={release.githubReleaseUrl}>GitHub release</a>
@@ -40,10 +42,10 @@ const release = {
         <p>The v1 release favors immediate usability and a stable public release path over stricter packaging.</p>
       </article>
       <article class="card">
-        <p class="kicker">Contract</p>
-        <h3>Manifest + schema version</h3>
-        <p>The release manifest defines the machine-readable release surface.</p>
-        <p><a href={release.manifestUrl}>manifest.json</a> · <a href={release.checksumsUrl}>checksums.txt</a></p>
+        <p class="kicker">Lineage</p>
+        <h3>Raw source and import hashes</h3>
+        <p>The release publishes raw-source and imported-filter provenance alongside the machine-readable manifest.</p>
+        <p><a href={release.manifestUrl}>manifest.json</a> · <a href={release.sourceLineageUrl}>source_lineage.json</a> · <a href={release.checksumsUrl}>checksums.txt</a></p>
       </article>
     </div>
   </section>

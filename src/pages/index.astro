@@ -15,18 +15,20 @@ const useCases = [
 ];
 
 const latestRelease = {
-  tag: "release-2026-03-11",
+  tag: "release-2026-03-11-standalone",
   archiveUrl:
-    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-11/openinterstate-release-2026-03-11.tar.gz",
+    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-11-standalone/openinterstate-release-2026-03-11-standalone.tar.gz",
   manifestUrl:
-    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-11/manifest.json",
+    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-11-standalone/manifest.json",
+  sourceLineageUrl:
+    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-11-standalone/source_lineage.json",
   checksumsUrl:
-    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-11/checksums.txt",
+    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-11-standalone/checksums.txt",
   stats: [
-    "563 corridors",
-    "40,756 corridor edges",
-    "68,881 corridor exits",
-    "101,522 places"
+    "564 corridors",
+    "40,709 corridor edges",
+    "36,195 corridor exits",
+    "101,363 places"
   ]
 };
 ---
@@ -105,11 +107,12 @@ const latestRelease = {
     <div class="card-grid">
       <article class="card">
         <h3>{latestRelease.tag}</h3>
-        <p>First public OpenInterstate dataset release built from live Pike product tables and filtered to strict interstate corridors.</p>
+        <p>Built by the standalone OpenInterstate pipeline from the raw U.S. OSM PBF, with published lineage for both the source file and imported canonical filter.</p>
         <div class="actions">
           <a class="button button-primary" href={latestRelease.archiveUrl}>Download archive</a>
           <a class="button button-secondary" href={latestRelease.manifestUrl}>Manifest</a>
         </div>
+        <p><a href={latestRelease.sourceLineageUrl}>source_lineage.json</a> · <a href={latestRelease.checksumsUrl}>checksums.txt</a></p>
       </article>
       {latestRelease.stats.map((stat) => (
         <article class="card">
