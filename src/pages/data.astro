@@ -1,0 +1,36 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const tables = [
+  ["corridors", "Contiguous directional interstate corridors."],
+  ["corridor_edges", "Graph edges assigned to corridors."],
+  ["corridor_exits", "Normalized exits linked to a corridor."],
+  ["exit_aliases", "Source exit aliases mapped to normalized exits."],
+  ["places", "Reachable places and services."],
+  ["exit_place_links", "Relationships between exits and places."],
+  ["exit_place_scores", "Reachability and ranking metadata."],
+  ["reference_routes", "Routes for QA, examples, and exploration."]
+];
+---
+
+<BaseLayout title="Data | OpenInterstate">
+  <section class="page-intro">
+    <p class="kicker">Data</p>
+    <h1>Start with a named data model.</h1>
+    <p class="lead">
+      OpenInterstate is designed around stable public nouns. The first release will ship a
+      compact, documented set of tables instead of a product-specific dump.
+    </p>
+  </section>
+
+  <section class="section">
+    <div class="card-grid">
+      {tables.map(([name, description]) => (
+        <article class="card">
+          <h3>{name}</h3>
+          <p>{description}</p>
+        </article>
+      ))}
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,34 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Releases | OpenInterstate">
+  <section class="page-intro">
+    <p class="kicker">Releases</p>
+    <h1>Dated, documented, and checksummed.</h1>
+    <p class="lead">
+      Public releases are the primary product surface. The first release is not published yet,
+      but the release contract and manifest structure are already defined.
+    </p>
+  </section>
+
+  <section class="section">
+    <div class="card-grid">
+      <article class="card">
+        <p class="kicker">Latest</p>
+        <h3>Not published yet</h3>
+        <p>The project is in bootstrap phase. The first release will appear here with checksums and schema metadata.</p>
+      </article>
+      <article class="card">
+        <p class="kicker">Formats</p>
+        <h3>GeoParquet first</h3>
+        <p>Reference routes and small examples will be published in secondary formats.</p>
+      </article>
+      <article class="card">
+        <p class="kicker">Contract</p>
+        <h3>Manifest + schema version</h3>
+        <p>The release manifest defines the machine-readable release surface.</p>
+      </article>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,97 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const datasets = [
+  "Directional interstate corridors",
+  "Normalized exits and aliases",
+  "Linked places and reachability scores",
+  "Reference routes for QA and exploration"
+];
+
+const useCases = [
+  "Route-aware travel and mapping apps",
+  "GIS analysis of interstate corridors and exits",
+  "Reference datasets for hobbyist or academic projects"
+];
+---
+
+<BaseLayout title="OpenInterstate" description="Open interstate system data for the United States.">
+  <section class="hero">
+    <div class="hero-copy">
+      <div class="eyebrow">Public data layer</div>
+      <h1>Open interstate system data for the United States.</h1>
+      <p class="lead">
+        OpenInterstate turns raw OpenStreetMap inputs into usable interstate datasets:
+        directional corridors, normalized exits, linked services, and reference routes.
+      </p>
+      <div class="actions">
+        <a class="button button-primary" href="/releases">Download the latest release</a>
+        <a class="button button-secondary" href="/docs">Read the docs</a>
+      </div>
+    </div>
+
+    <aside class="hero-panel">
+      <p class="kicker">Release shape</p>
+      <h3>Built for people who need usable interstate structure, not just raw road files.</h3>
+      <div class="stat-grid">
+        <div class="card">
+          <p class="kicker">Primary format</p>
+          <h3>GeoParquet</h3>
+          <p>Large-scale, analytics-friendly geospatial tables.</p>
+        </div>
+        <div class="card">
+          <p class="kicker">Secondary formats</p>
+          <h3>GPX + samples</h3>
+          <p>Reference routes, sample extracts, and examples for fast onboarding.</p>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div>
+        <p class="kicker">What you get</p>
+        <h2>Derived data products that are ready to work with.</h2>
+      </div>
+      <p>Raw OSM is the source. OpenInterstate is the usable layer on top of it.</p>
+    </div>
+    <div class="card-grid">
+      {datasets.map((item) => (
+        <article class="card">
+          <h3>{item}</h3>
+          <p>Documented, named, and intended to be consumed outside a single product.</p>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="band">
+      <p class="kicker">Why this exists</p>
+      <h2>The hard part is not downloading a road file.</h2>
+      <p class="lead">
+        The hard part is turning raw map data into a coherent model of the U.S. Interstate
+        System. OpenInterstate publishes the corridor, exit, place, and route artifacts that
+        teams usually have to derive themselves.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div>
+        <p class="kicker">Use cases</p>
+        <h2>Useful to developers first.</h2>
+      </div>
+      <a href="https://github.com/tldev/openinterstate">View the repo</a>
+    </div>
+    <div class="mini-grid">
+      {useCases.map((item) => (
+        <article class="card">
+          <h3>{item}</h3>
+        </article>
+      ))}
+    </div>
+  </section>
+</BaseLayout>

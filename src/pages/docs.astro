@@ -1,0 +1,38 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const docs = [
+  ["Project charter", "Mission, scope, and Pike boundary."],
+  ["Naming glossary", "Preferred public nouns and what to avoid."],
+  ["Data contract draft", "The current public release surface."],
+  ["Release format", "Manifest and file-layout expectations."],
+  ["Licensing and attribution", "Working assumptions and launch requirements."]
+];
+---
+
+<BaseLayout title="Docs | OpenInterstate">
+  <section class="page-intro">
+    <p class="kicker">Docs</p>
+    <h1>Project docs before platform sprawl.</h1>
+    <p class="lead">
+      OpenInterstate starts with explicit docs because the public contract matters more than
+      the stack choice. The docs live in the main repository and are mirrored here.
+    </p>
+  </section>
+
+  <section class="section">
+    <div class="card-grid">
+      {docs.map(([title, description]) => (
+        <article class="card">
+          <h3>{title}</h3>
+          <p>{description}</p>
+        </article>
+      ))}
+    </div>
+    <div class="actions">
+      <a class="button button-primary" href="https://github.com/tldev/openinterstate/tree/main/docs">
+        Browse docs in GitHub
+      </a>
+    </div>
+  </section>
+</BaseLayout>

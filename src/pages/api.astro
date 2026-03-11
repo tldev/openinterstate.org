@@ -1,0 +1,42 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const endpoints = [
+  "GET /v1/releases",
+  "GET /v1/releases/latest",
+  "GET /v1/corridors",
+  "GET /v1/corridors/{corridor_id}",
+  "GET /v1/exits/{exit_id}",
+  "GET /v1/exits/{exit_id}/places",
+  "GET /v1/reference-routes",
+  "GET /v1/reference-routes/{reference_route_id}"
+];
+---
+
+<BaseLayout title="API | OpenInterstate">
+  <section class="page-intro">
+    <p class="kicker">API</p>
+    <h1>Read-only lookup and discovery.</h1>
+    <p class="lead">
+      The API is planned as a stable, read-only surface over release-backed data. Static
+      releases come first; the API follows the published contract.
+    </p>
+  </section>
+
+  <section class="section">
+    <div class="band">
+      <p class="kicker">Initial endpoints</p>
+      <ul class="list-clean">
+        {endpoints.map((endpoint) => (
+          <li><code>{endpoint}</code></li>
+        ))}
+      </ul>
+      <p>
+        Draft spec:
+        <a href="https://github.com/tldev/openinterstate/blob/main/api/openapi.yaml">
+          api/openapi.yaml
+        </a>
+      </p>
+    </div>
+  </section>
+</BaseLayout>
