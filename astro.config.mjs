@@ -1,5 +1,8 @@
 import { defineConfig } from "astro/config";
 
+import sitemap from "@astrojs/sitemap";
+
 export default defineConfig({
-  site: "https://openinterstate.org"
+  site: "https://openinterstate.org",
+  integrations: [sitemap()]
 });
