@@ -13,6 +13,22 @@ const useCases = [
   "GIS analysis of interstate corridors and exits",
   "Reference datasets for hobbyist or academic projects"
 ];
+
+const latestRelease = {
+  tag: "release-2026-03-11",
+  archiveUrl:
+    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-11/openinterstate-release-2026-03-11.tar.gz",
+  manifestUrl:
+    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-11/manifest.json",
+  checksumsUrl:
+    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-11/checksums.txt",
+  stats: [
+    "563 corridors",
+    "40,756 corridor edges",
+    "68,881 corridor exits",
+    "101,522 places"
+  ]
+};
 ---
 
 <BaseLayout title="OpenInterstate" description="Open interstate system data for the United States.">
@@ -75,6 +91,31 @@ const useCases = [
         System. OpenInterstate publishes the corridor, exit, place, and route artifacts that
         teams usually have to derive themselves.
       </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div>
+        <p class="kicker">Latest release</p>
+        <h2>v1 is public now.</h2>
+      </div>
+      <a href="/releases">Open release details</a>
+    </div>
+    <div class="card-grid">
+      <article class="card">
+        <h3>{latestRelease.tag}</h3>
+        <p>First public OpenInterstate dataset release built from live Pike product tables and filtered to strict interstate corridors.</p>
+        <div class="actions">
+          <a class="button button-primary" href={latestRelease.archiveUrl}>Download archive</a>
+          <a class="button button-secondary" href={latestRelease.manifestUrl}>Manifest</a>
+        </div>
+      </article>
+      {latestRelease.stats.map((stat) => (
+        <article class="card">
+          <h3>{stat}</h3>
+        </article>
+      ))}
     </div>
   </section>
 

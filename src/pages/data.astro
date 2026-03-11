@@ -24,6 +24,17 @@ const tables = [
   </section>
 
   <section class="section">
+    <div class="band">
+      <p class="kicker">v1 release format</p>
+      <h3>CSV tables, GPX reference routes, and GeoJSON examples.</h3>
+      <p>
+        The first public release optimizes for immediate usability and transparent lineage.
+        Stricter Parquet and GeoParquet packaging can follow once the release path is stable.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
     <div class="card-grid">
       {tables.map(([name, description]) => (
         <article class="card">
