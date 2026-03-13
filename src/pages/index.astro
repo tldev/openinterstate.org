@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import InterstateMap from "../components/InterstateMap.astro";
 
 const release = {
   tag: "release-2026-03-11-standalone",
@@ -28,6 +29,8 @@ const tables = [
     </p>
   </section>
 
+  <InterstateMap />
+
   <section>
     <div class="stats">
       <div>
@@ -43,7 +46,7 @@ const tables = [
         <div class="stat-lbl">places</div>
       </div>
       <div>
-        <div class="stat-val">250</div>
+        <div class="stat-val">195</div>
         <div class="stat-lbl">reference routes</div>
       </div>
     </div>

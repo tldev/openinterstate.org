@@ -1,0 +1,219 @@
+---
+import mapData from "../data/interstate-map.json";
+---
+
+<div class="map-wrap">
+  <svg
+    viewBox={mapData.viewBox}
+    xmlns="http://www.w3.org/2000/svg"
+    class="interstate-map"
+    aria-label="Map of US primary interstates"
+    role="img"
+  >
+    <g data-states
+      fill="none"
+      stroke="#e5e5e5"
+      stroke-width="0.75"
+      stroke-linejoin="round"
+      opacity="0.7"
+    >
+      {mapData.states.map((d) => <path d={d} />)}
+    </g>
+    <g fill="none">
+      {mapData.interstates.map((r) => (
+        <g data-route>
+          <path
+            d={r.d}
+            stroke="transparent"
+            stroke-width="8"
+            stroke-linecap="round"
+            fill="none"
+          />
+          <path
+            d={r.d}
+            stroke="#737373"
+            stroke-width="1.3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            opacity="0.3"
+          />
+          <path
+            d={r.d}
+            stroke="#171717"
+            stroke-width="1.3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            opacity="0"
+            style="pointer-events:none"
+          />
+          <text
+            x={r.lx}
+            y={r.ly}
+            fill="#737373"
+            opacity="0.45"
+            font-size="6"
+            text-anchor="middle"
+            dominant-baseline="central"
+            style="pointer-events:none"
+          >{r.name}</text>
+        </g>
+      ))}
+    </g>
+  </svg>
+</div>
+
+<script>
+  const svg = document.querySelector('.interstate-map');
+  if (svg) {
+    const stateEls = svg.querySelectorAll('[data-states] > path');
+    stateEls.forEach(el => { el.style.transition = 'fill 0.4s'; });
+
+    const activeStates = new Set();
+    const stateCache = new WeakMap();
+
+    // Lazily compute which states a route passes through, with distance markers
+    function getRouteStates(hlPath, L) {
+      if (stateCache.has(hlPath)) return stateCache.get(hlPath);
+      const entries = [];
+      const seen = new Set();
+      const samples = 60;
+      for (let i = 0; i <= samples; i++) {
+        const len = (i / samples) * L;
+        const pt = hlPath.getPointAtLength(len);
+        for (const sp of stateEls) {
+          if (!seen.has(sp) && sp.isPointInFill({ x: pt.x, y: pt.y })) {
+            seen.add(sp);
+            entries.push({ el: sp, len });
+          }
+        }
+      }
+      stateCache.set(hlPath, entries);
+      return entries;
+    }
+
+    function clearStates() {
+      for (const el of activeStates) {
+        el.style.fill = '';
+      }
+      activeStates.clear();
+    }
+
+    document.querySelectorAll('[data-route]').forEach(g => {
+      const paths = g.querySelectorAll('path');
+      const hl = paths[2];
+      if (!hl) return;
+
+      const L = hl.getTotalLength();
+      hl.style.strokeDasharray = `0 ${L}`;
+      hl.style.strokeDashoffset = '0';
+
+      let raf = null;
+      let fadeTimer = null;
+
+      g.addEventListener('mouseenter', e => {
+        if (raf) cancelAnimationFrame(raf);
+        if (fadeTimer) clearTimeout(fadeTimer);
+        clearStates();
+
+        const ctm = svg.getScreenCTM();
+        if (!ctm) return;
+        const pt = svg.createSVGPoint();
+        pt.x = e.clientX;
+        pt.y = e.clientY;
+        const sp = pt.matrixTransform(ctm.inverse());
+
+        const P = nearest(hl, sp, L);
+        const maxW = 2 * Math.max(P, L - P);
+        const dur = 1200;
+        const t0 = performance.now();
+        const routeStates = getRouteStates(hl, L);
+
+        hl.style.transition = 'none';
+        hl.style.opacity = '0.6';
+
+        (function tick(now) {
+          const p = Math.min(1, (now - t0) / dur);
+          const ease = 1 - (1 - p) ** 3;
+          const w = ease * maxW;
+          const s = Math.max(0, P - w / 2);
+          const end = Math.min(L, P + w / 2);
+          hl.style.strokeDasharray = `${end - s} ${L}`;
+          hl.style.strokeDashoffset = `${-s}`;
+
+          // Highlight states as the sweep reaches them
+          for (const rs of routeStates) {
+            if (rs.len >= s && rs.len <= end && !activeStates.has(rs.el)) {
+              activeStates.add(rs.el);
+              rs.el.style.fill = 'rgba(23, 23, 23, 0.08)';
+            }
+          }
+
+          if (p < 1) raf = requestAnimationFrame(tick);
+        })(t0);
+      });
+
+      g.addEventListener('mouseleave', () => {
+        if (raf) cancelAnimationFrame(raf);
+        hl.style.transition = 'opacity 0.2s';
+        hl.style.opacity = '0';
+        fadeTimer = setTimeout(() => {
+          hl.style.strokeDasharray = `0 ${L}`;
+        }, 200);
+        clearStates();
+      });
+    });
+  }
+
+  function nearest(path, pt, L) {
+    let best = 0, bestD = Infinity;
+    for (let i = 0; i <= 40; i++) {
+      const len = (i / 40) * L;
+      const p = path.getPointAtLength(len);
+      const d = (p.x - pt.x) ** 2 + (p.y - pt.y) ** 2;
+      if (d < bestD) { bestD = d; best = len; }
+    }
+    const step = L / 40;
+    const lo = Math.max(0, best - step);
+    const hi = Math.min(L, best + step);
+    for (let i = 0; i <= 10; i++) {
+      const len = lo + (i / 10) * (hi - lo);
+      const p = path.getPointAtLength(len);
+      const d = (p.x - pt.x) ** 2 + (p.y - pt.y) ** 2;
+      if (d < bestD) { bestD = d; best = len; }
+    }
+    return best;
+  }
+</script>
+
+<style is:global>
+  .map-wrap {
+    margin: 0.5rem -3rem 2rem;
+  }
+
+  .interstate-map {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  [data-route] text {
+    font-family: var(--font);
+    transition: opacity 0.2s, fill 0.2s;
+  }
+
+  [data-route]:hover text {
+    opacity: 1;
+    fill: #171717;
+  }
+
+  @media (max-width: 640px) {
+    .map-wrap {
+      margin-left: -1rem;
+      margin-right: -1rem;
+    }
+
+    [data-route] text {
+      display: none;
+    }
+  }
+</style>
