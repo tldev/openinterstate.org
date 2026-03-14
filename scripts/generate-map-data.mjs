@@ -194,7 +194,9 @@ async function main() {
   const primary = rows.filter((r) => /^I-\d{1,2}$/.test(r.interstate_name));
   console.log(`${primary.length} primary interstate routes`);
 
-  // 3. Deduplicate directions (one per interstate, prefer NB/EB)
+  // 3. Choose one display direction per interstate (prefer NB/EB), but keep
+  // all route rows in that direction so disjoint systems like I-76 do not lose
+  // one side of the country.
   const groups = new Map();
   for (const r of primary) {
     const k = r.interstate_name;
@@ -202,8 +204,17 @@ async function main() {
     groups.get(k).push(r);
   }
   const deduped = [];
-  for (const [, routes] of groups) {
-    deduped.push(routes.find((r) => r.direction_code === "NB" || r.direction_code === "EB") || routes[0]);
+  for (const [name, routes] of groups) {
+    const preferredDirection =
+      routes.find((r) => r.direction_code === "NB")?.direction_code ||
+      routes.find((r) => r.direction_code === "EB")?.direction_code ||
+      routes[0]?.direction_code;
+    if (!preferredDirection) continue;
+    deduped.push({
+      name,
+      directionCode: preferredDirection,
+      routes: routes.filter((r) => r.direction_code === preferredDirection),
+    });
   }
   console.log(`${deduped.length} interstates after direction dedup`);
 
@@ -213,12 +224,16 @@ async function main() {
   const dirCodeToLabel = { EB: "Eastbound", WB: "Westbound", NB: "Northbound", SB: "Southbound" };
 
   // 4. Project all interstate coordinates (preserve route segment breaks)
-  const rawInterstates = deduped.map((route) => {
-    const geojson = JSON.parse(route.geometry_geojson);
-    const segments = geojson.type === "MultiLineString" ? geojson.coordinates : [geojson.coordinates];
+  const rawInterstates = deduped.map((entry) => {
+    const segments = [];
+    for (const route of entry.routes) {
+      const geojson = JSON.parse(route.geometry_geojson);
+      const routeSegments = geojson.type === "MultiLineString" ? geojson.coordinates : [geojson.coordinates];
+      segments.push(...routeSegments);
+    }
 
     // Build metadata for this interstate
-    const name = route.interstate_name;
+    const name = entry.name;
     const distDirs = distances.get(name) || new Map();
     const exitDirs = exitCounts.get(name) || new Map();
 
