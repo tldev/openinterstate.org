@@ -4,7 +4,7 @@
  * Reads reference_routes.csv, simplifies geometries, projects to Albers Equal Area,
  * and outputs a JSON file for the Astro component.
  *
- * Usage: node scripts/generate-map-data.mjs [path-to-reference_routes.csv]
+ * Usage: node scripts/generate-map-data.mjs [path-to-csv-dir-or-reference_routes.csv]
  */
 
 import { readFileSync, writeFileSync } from "fs";
@@ -127,6 +127,17 @@ function toPath(pts) {
   return d;
 }
 
+function pointInPoly(x, y, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i], [xj, yj] = ring[j];
+    if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
 function toMultiPath(segments) {
   return segments.map((segment) => toPath(segment)).filter(Boolean).join(" ");
 }
@@ -144,12 +155,40 @@ async function fetchStates() {
 
 // --- Main ---
 async function main() {
-  const csvPath = process.argv[2] || "/tmp/openinterstate-release/release-2026-03-12-coldpath/csv/reference_routes.csv";
+  const arg = process.argv[2] || "/tmp/openinterstate-release/release-2026-03-12-coldpath/csv/reference_routes.csv";
+
+  // Resolve CSV directory — accept either a directory or a direct path to reference_routes.csv
+  const csvDir = arg.endsWith(".csv") ? dirname(arg) : arg;
+  const csvPath = join(csvDir, "reference_routes.csv");
 
   // 1. Parse CSV
   console.log(`Reading ${csvPath}...`);
   const rows = parseCSV(readFileSync(csvPath, "utf-8"));
   console.log(`${rows.length} total reference routes`);
+
+  // 1b. Parse corridor_exits for exit counts per interstate per direction
+  const exitCountsPath = join(csvDir, "corridor_exits.csv");
+  const exitCounts = new Map(); // "I-10" -> { east: Set, west: Set }
+  try {
+    const exitRows = parseCSV(readFileSync(exitCountsPath, "utf-8"));
+    for (const r of exitRows) {
+      if (!exitCounts.has(r.interstate_name)) exitCounts.set(r.interstate_name, new Map());
+      const dirs = exitCounts.get(r.interstate_name);
+      if (!dirs.has(r.direction_code)) dirs.set(r.direction_code, new Set());
+      dirs.get(r.direction_code).add(r.exit_id);
+    }
+    console.log(`Loaded exit counts for ${exitCounts.size} interstates`);
+  } catch {
+    console.log("corridor_exits.csv not found, skipping exit counts");
+  }
+
+  // 1c. Sum distances per interstate per direction from reference routes
+  const distances = new Map(); // "I-10" -> { EB: meters, WB: meters }
+  for (const r of rows) {
+    if (!distances.has(r.interstate_name)) distances.set(r.interstate_name, new Map());
+    const dirs = distances.get(r.interstate_name);
+    dirs.set(r.direction_code, (dirs.get(r.direction_code) || 0) + parseFloat(r.distance_m));
+  }
 
   // 2. Filter to primary interstates (1-2 digit)
   const primary = rows.filter((r) => /^I-\d{1,2}$/.test(r.interstate_name));
@@ -168,13 +207,38 @@ async function main() {
   }
   console.log(`${deduped.length} interstates after direction dedup`);
 
+  // Direction code mapping: corridor_exits uses east/west/north/south,
+  // reference_routes uses EB/WB/NB/SB
+  const dirMap = { east: "Eastbound", west: "Westbound", north: "Northbound", south: "Southbound" };
+  const dirCodeToLabel = { EB: "Eastbound", WB: "Westbound", NB: "Northbound", SB: "Southbound" };
+
   // 4. Project all interstate coordinates (preserve route segment breaks)
   const rawInterstates = deduped.map((route) => {
     const geojson = JSON.parse(route.geometry_geojson);
     const segments = geojson.type === "MultiLineString" ? geojson.coordinates : [geojson.coordinates];
+
+    // Build metadata for this interstate
+    const name = route.interstate_name;
+    const distDirs = distances.get(name) || new Map();
+    const exitDirs = exitCounts.get(name) || new Map();
+
+    // Total length in miles (average of both directions)
+    const distValues = [...distDirs.values()];
+    const avgDist = distValues.length ? distValues.reduce((a, b) => a + b, 0) / distValues.length : 0;
+    const lengthMi = Math.round(avgDist / 1609.34);
+
+    // Exit counts per direction label
+    const exits = {};
+    for (const [code, ids] of exitDirs) {
+      const label = dirMap[code];
+      if (label) exits[label] = ids.size;
+    }
+
     return {
-      name: route.interstate_name,
-      num: route.interstate_name.replace("I-", ""),
+      name,
+      num: name.replace("I-", ""),
+      lengthMi,
+      exits,
       projectedSegments: segments.map((coords) => coords.map(([lon, lat]) => project(lon, lat))),
     };
   });
@@ -184,10 +248,11 @@ async function main() {
   const rawStates = [];
   for (const feat of stateFeatures) {
     const geom = feat.geometry;
+    const name = feat.properties.name;
     const polys = geom.type === "Polygon" ? [geom.coordinates] : geom.type === "MultiPolygon" ? geom.coordinates : [];
     for (const poly of polys) {
       for (const ring of poly) {
-        rawStates.push(ring.map(([lon, lat]) => project(lon, lat)));
+        rawStates.push({ name, pts: ring.map(([lon, lat]) => project(lon, lat)) });
       }
     }
   }
@@ -205,7 +270,7 @@ async function main() {
   for (const i of rawInterstates) {
     for (const segment of i.projectedSegments) updateBB(segment);
   }
-  for (const s of rawStates) updateBB(s);
+  for (const s of rawStates) updateBB(s.pts);
 
   // 7. Scale and offset to fit viewport
   const dw = maxX - minX, dh = maxY - minY;
@@ -231,14 +296,16 @@ async function main() {
       lx: rd(mid[0]),
       ly: rd(mid[1]),
       n: pts.length,
+      lengthMi: r.lengthMi,
+      exits: r.exits,
     };
   });
 
   const states = rawStates
     .map((ring) => {
-      let pts = ring.map(tx);
+      let pts = ring.pts.map(tx);
       pts = simplify(pts, STATE_TOL);
-      return pts.length >= 3 ? toPath(pts) + "Z" : null;
+      return pts.length >= 3 ? { name: ring.name, d: toPath(pts) + "Z" } : null;
     })
     .filter(Boolean);
 
@@ -246,8 +313,34 @@ async function main() {
   console.log(`Interstate points after simplification: ${totalPts}`);
   console.log(`State boundary paths: ${states.length}`);
 
-  // 9. Write output
-  const data = { viewBox: `0 0 ${W} ${H}`, states, interstates };
+  // 9. Compute state-to-interstates mapping via point-in-polygon
+  const statePolys = rawStates.map((ring) => ({ name: ring.name, pts: ring.pts.map(tx) }));
+  const stateInterstates = {};
+  for (const r of rawInterstates) {
+    const allPts = r.projectedSegments.flatMap((seg) => seg.map(tx));
+    const step = Math.max(1, Math.floor(allPts.length / 80));
+    const hitStates = new Set();
+    for (let i = 0; i < allPts.length; i += step) {
+      const [x, y] = allPts[i];
+      for (const sp of statePolys) {
+        if (!hitStates.has(sp.name) && pointInPoly(x, y, sp.pts)) {
+          hitStates.add(sp.name);
+        }
+      }
+    }
+    for (const s of hitStates) {
+      if (!stateInterstates[s]) stateInterstates[s] = [];
+      stateInterstates[s].push(r.name);
+    }
+  }
+  // Sort interstates within each state by number
+  for (const s of Object.keys(stateInterstates)) {
+    stateInterstates[s].sort((a, b) => parseInt(a.replace("I-", "")) - parseInt(b.replace("I-", "")));
+  }
+  console.log(`State-interstate mappings: ${Object.keys(stateInterstates).length} states`);
+
+  // 10. Write output
+  const data = { viewBox: `0 0 ${W} ${H}`, states, interstates, stateInterstates };
   const json = JSON.stringify(data);
   const outPath = join(PROJECT_ROOT, "src/data/interstate-map.json");
   writeFileSync(outPath, json);

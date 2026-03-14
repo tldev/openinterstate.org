@@ -17,11 +17,11 @@ import mapData from "../data/interstate-map.json";
       stroke-linejoin="round"
       opacity="0.7"
     >
-      {mapData.states.map((d) => <path d={d} />)}
+      {mapData.states.map((s) => <path d={s.d} data-state={s.name} />)}
     </g>
     <g fill="none">
-      {mapData.interstates.map((r) => (
-        <g data-route>
+      {mapData.interstates.map((r, i) => (
+        <g data-route data-idx={i}>
           <path
             d={r.d}
             stroke="transparent"
@@ -60,42 +60,81 @@ import mapData from "../data/interstate-map.json";
       ))}
     </g>
   </svg>
+  <div class="map-card" aria-hidden="true">
+    <div class="map-card-header">
+      <span class="map-card-name"></span>
+      <span class="map-card-length"></span>
+    </div>
+    <div class="map-card-body">
+      <div class="map-card-row map-card-exit-a">
+        <span class="map-card-label"></span>
+        <span class="map-card-value"></span>
+      </div>
+      <div class="map-card-row map-card-exit-b">
+        <span class="map-card-label"></span>
+        <span class="map-card-value"></span>
+      </div>
+    </div>
+    <div class="map-card-states"></div>
+  </div>
 </div>
 
-<script>
+<script define:vars={{ routeMeta: mapData.interstates.map(r => ({ name: r.name, lengthMi: r.lengthMi, exits: r.exits })) }}>
   const svg = document.querySelector('.interstate-map');
-  if (svg) {
-    const stateEls = svg.querySelectorAll('[data-states] > path');
-    stateEls.forEach(el => { el.style.transition = 'fill 0.4s'; });
+  const card = document.querySelector('.map-card');
 
-    const activeStates = new Set();
+  if (svg && card) {
+    const nameEl = card.querySelector('.map-card-name');
+    const lengthEl = card.querySelector('.map-card-length');
+    const exitA = card.querySelector('.map-card-exit-a');
+    const exitB = card.querySelector('.map-card-exit-b');
+    const statesEl = card.querySelector('.map-card-states');
+
+    const stateEls = svg.querySelectorAll('[data-states] > path');
     const stateCache = new WeakMap();
 
-    // Lazily compute which states a route passes through, with distance markers
     function getRouteStates(hlPath, L) {
       if (stateCache.has(hlPath)) return stateCache.get(hlPath);
-      const entries = [];
-      const seen = new Set();
+      const names = new Set();
       const samples = 60;
       for (let i = 0; i <= samples; i++) {
-        const len = (i / samples) * L;
-        const pt = hlPath.getPointAtLength(len);
+        const pt = hlPath.getPointAtLength((i / samples) * L);
         for (const sp of stateEls) {
-          if (!seen.has(sp) && sp.isPointInFill({ x: pt.x, y: pt.y })) {
-            seen.add(sp);
-            entries.push({ el: sp, len });
+          const name = sp.getAttribute('data-state');
+          if (!names.has(name) && sp.isPointInFill({ x: pt.x, y: pt.y })) {
+            names.add(name);
           }
         }
       }
-      stateCache.set(hlPath, entries);
-      return entries;
+      const sorted = [...names].sort();
+      stateCache.set(hlPath, sorted);
+      return sorted;
     }
 
-    function clearStates() {
-      for (const el of activeStates) {
-        el.style.fill = '';
-      }
-      activeStates.clear();
+    function showCard(idx, stateNames) {
+      const meta = routeMeta[idx];
+      if (!meta) return;
+
+      nameEl.textContent = meta.name;
+      lengthEl.textContent = meta.lengthMi.toLocaleString() + ' mi';
+
+      const dirs = Object.entries(meta.exits).sort(([a], [b]) => a.localeCompare(b));
+      [exitA, exitB].forEach((row, i) => {
+        if (dirs[i]) {
+          row.querySelector('.map-card-label').textContent = dirs[i][0] + ' Exits';
+          row.querySelector('.map-card-value').textContent = dirs[i][1].toLocaleString();
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      statesEl.textContent = stateNames.join(', ');
+      card.classList.add('visible');
+    }
+
+    function hideCard() {
+      card.classList.remove('visible');
     }
 
     document.querySelectorAll('[data-route]').forEach(g => {
@@ -103,6 +142,7 @@ import mapData from "../data/interstate-map.json";
       const hl = paths[2];
       if (!hl) return;
 
+      const idx = parseInt(g.getAttribute('data-idx'), 10);
       const L = hl.getTotalLength();
       hl.style.strokeDasharray = `0 ${L}`;
       hl.style.strokeDashoffset = '0';
@@ -113,7 +153,6 @@ import mapData from "../data/interstate-map.json";
       g.addEventListener('mouseenter', e => {
         if (raf) cancelAnimationFrame(raf);
         if (fadeTimer) clearTimeout(fadeTimer);
-        clearStates();
 
         const ctm = svg.getScreenCTM();
         if (!ctm) return;
@@ -126,7 +165,8 @@ import mapData from "../data/interstate-map.json";
         const maxW = 2 * Math.max(P, L - P);
         const dur = 1200;
         const t0 = performance.now();
-        const routeStates = getRouteStates(hl, L);
+
+        showCard(idx, getRouteStates(hl, L));
 
         hl.style.transition = 'none';
         hl.style.opacity = '0.6';
@@ -139,15 +179,6 @@ import mapData from "../data/interstate-map.json";
           const end = Math.min(L, P + w / 2);
           hl.style.strokeDasharray = `${end - s} ${L}`;
           hl.style.strokeDashoffset = `${-s}`;
-
-          // Highlight states as the sweep reaches them
-          for (const rs of routeStates) {
-            if (rs.len >= s && rs.len <= end && !activeStates.has(rs.el)) {
-              activeStates.add(rs.el);
-              rs.el.style.fill = 'rgba(23, 23, 23, 0.08)';
-            }
-          }
-
           if (p < 1) raf = requestAnimationFrame(tick);
         })(t0);
       });
@@ -159,7 +190,7 @@ import mapData from "../data/interstate-map.json";
         fadeTimer = setTimeout(() => {
           hl.style.strokeDasharray = `0 ${L}`;
         }, 200);
-        clearStates();
+        hideCard();
       });
     });
   }
@@ -188,6 +219,7 @@ import mapData from "../data/interstate-map.json";
 <style is:global>
   .map-wrap {
     margin: 0.5rem -3rem 2rem;
+    position: relative;
   }
 
   .interstate-map {
@@ -206,6 +238,63 @@ import mapData from "../data/interstate-map.json";
     fill: #171717;
   }
 
+  .map-card {
+    position: absolute;
+    top: 50%;
+    right: -7rem;
+    transform: translateY(-50%);
+    width: 11rem;
+    font-family: var(--font);
+    font-size: 0.7rem;
+    line-height: 1.4;
+    color: var(--muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    opacity: 0;
+    transition: opacity 0.15s;
+    pointer-events: none;
+  }
+
+  .map-card.visible {
+    opacity: 1;
+  }
+
+  .map-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 0.5rem 0.625rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .map-card-name {
+    color: var(--text);
+    font-weight: 700;
+    font-size: 0.8rem;
+  }
+
+  .map-card-length {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .map-card-body {
+    padding: 0.375rem 0.625rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .map-card-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.125rem 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .map-card-states {
+    padding: 0.375rem 0.625rem;
+    line-height: 1.5;
+  }
+
   @media (max-width: 640px) {
     .map-wrap {
       margin-left: -1rem;
@@ -213,6 +302,10 @@ import mapData from "../data/interstate-map.json";
     }
 
     [data-route] text {
+      display: none;
+    }
+
+    .map-card {
       display: none;
     }
   }
