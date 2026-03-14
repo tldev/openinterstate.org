@@ -190,9 +190,11 @@ async function main() {
     dirs.set(r.direction_code, (dirs.get(r.direction_code) || 0) + parseFloat(r.distance_m));
   }
 
-  // 2. Filter to primary interstates (1-2 digit)
-  const primary = rows.filter((r) => /^I-\d{1,2}$/.test(r.interstate_name));
-  console.log(`${primary.length} primary interstate routes`);
+  // 2. Filter to map-display interstates:
+  //    - primary interstates (1-2 digit)
+  //    - currently supported official signed branches
+  const primary = rows.filter((r) => /^(?:I-\d{1,2}|I-35[EW]|I-69[CEW])$/.test(r.interstate_name));
+  console.log(`${primary.length} map-display interstate routes`);
 
   // 3. Choose one display direction per interstate (prefer NB/EB), but keep
   // all route rows in that direction so disjoint systems like I-76 do not lose
