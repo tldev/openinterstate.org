@@ -1,19 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-
-const release = {
-  tag: "release-2026-03-14-gha-12",
-  archiveUrl:
-    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-14-gha-12/openinterstate-release-2026-03-14-gha-12.tar.gz",
-  manifestUrl:
-    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-14-gha-12/manifest.json",
-  sourceLineageUrl:
-    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-14-gha-12/source_lineage.json",
-  checksumsUrl:
-    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-14-gha-12/checksums.txt",
-  githubUrl:
-    "https://github.com/tldev/openinterstate/releases/tag/release-2026-03-14-gha-12",
-};
+import { release, reachabilityRelease } from "../data/releases";
 ---
 
 <BaseLayout title="Releases — OpenInterstate">
@@ -25,7 +12,7 @@ const release = {
   <section>
     <h2>{release.tag}</h2>
     <p>
-      277 corridors, 39,314 exits, 93,189 places, 277 reference routes.
+      647 corridors, 96,366 exits, 109,647 places, 468,361 exit-place links, 263 reference routes.
       Built from the raw U.S. OSM PBF with standalone OpenInterstate tooling.
     </p>
 
@@ -40,6 +27,17 @@ const release = {
       <li><a href={release.checksumsUrl}>checksums.txt</a></li>
       <li><a href={release.githubUrl}>GitHub release page</a></li>
     </ul>
+  </section>
+
+  <section>
+    <h2>Reachability scores</h2>
+    <p>
+      Reachability scores are published separately from
+      <a href="https://github.com/tldev/openinterstate-reachability">openinterstate-reachability</a>.
+    </p>
+    <p>
+      Latest: <a href={reachabilityRelease.githubUrl}>{reachabilityRelease.tag}</a>
+    </p>
   </section>
 
   <section>

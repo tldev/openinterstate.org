@@ -1,12 +1,7 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import InterstateMap from "../components/InterstateMap.astro";
-
-const release = {
-  tag: "release-2026-03-14-gha-12",
-  archiveUrl:
-    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-14-gha-12/openinterstate-release-2026-03-14-gha-12.tar.gz",
-};
+import { release, reachabilityRelease } from "../data/releases";
 
 const tables = [
   ["corridors", "Contiguous directional interstate corridors"],
@@ -14,8 +9,7 @@ const tables = [
   ["corridor_exits", "Normalized exits linked to a corridor"],
   ["exit_aliases", "Source exit aliases mapped to normalized exits"],
   ["places", "Reachable places and services"],
-  ["exit_place_links", "Relationships between exits and places"],
-  ["exit_place_scores", "Reachability and ranking metadata"],
+  ["exit_place_links", "Spatial proximity links between exits and places"],
   ["reference_routes", "Routes for QA, examples, and exploration"],
 ];
 ---
@@ -34,19 +28,23 @@ const tables = [
   <section>
     <div class="stats">
       <div>
-        <div class="stat-val">277</div>
+        <div class="stat-val">647</div>
         <div class="stat-lbl">corridors</div>
       </div>
       <div>
-        <div class="stat-val">39,314</div>
+        <div class="stat-val">96,366</div>
         <div class="stat-lbl">exits</div>
       </div>
       <div>
-        <div class="stat-val">93,189</div>
+        <div class="stat-val">109,647</div>
         <div class="stat-lbl">places</div>
       </div>
       <div>
-        <div class="stat-val">277</div>
+        <div class="stat-val">468,361</div>
+        <div class="stat-lbl">exit-place links</div>
+      </div>
+      <div>
+        <div class="stat-val">263</div>
         <div class="stat-lbl">reference routes</div>
       </div>
     </div>
@@ -60,6 +58,10 @@ const tables = [
   {release.archiveUrl}</code></pre>
     <p>
       Or <a href="/releases">browse releases</a> for manifests, checksums, and lineage files.
+    </p>
+    <p>
+      Reachability scores are published separately:
+      <a href={reachabilityRelease.githubUrl}>openinterstate-reachability {reachabilityRelease.tag}</a>
     </p>
   </section>
 
@@ -91,7 +93,8 @@ const tables = [
   <section>
     <h2>Links</h2>
     <ul class="links">
-      <li><a href="https://github.com/tldev/openinterstate">GitHub</a></li>
+      <li><a href="https://github.com/tldev/openinterstate">GitHub — core data</a></li>
+      <li><a href="https://github.com/tldev/openinterstate-reachability">GitHub — reachability</a></li>
       <li><a href="/docs">Documentation</a></li>
       <li><a href="/api">API reference</a></li>
       <li><a href="/data">Data model</a></li>
