@@ -1,18 +1,7 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import InterstateMap from "../components/InterstateMap.astro";
-
-const release = {
-  tag: "release-2026-03-25-gha-14",
-  archiveUrl:
-    "https://github.com/tldev/openinterstate/releases/download/release-2026-03-25-gha-14/openinterstate-release-2026-03-25-gha-14.tar.gz",
-};
-
-const reachabilityRelease = {
-  tag: "score-20260326-6c28d57",
-  githubUrl:
-    "https://github.com/tldev/openinterstate-reachability/releases/tag/score-20260326-6c28d57",
-};
+import { release, reachabilityRelease } from "../data/releases";
 
 const tables = [
   ["corridors", "Contiguous directional interstate corridors"],
@@ -49,6 +38,10 @@ const tables = [
       <div>
         <div class="stat-val">109,647</div>
         <div class="stat-lbl">places</div>
+      </div>
+      <div>
+        <div class="stat-val">468,361</div>
+        <div class="stat-lbl">exit-place links</div>
       </div>
       <div>
         <div class="stat-val">263</div>
