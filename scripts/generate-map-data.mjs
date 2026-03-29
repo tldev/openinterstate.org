@@ -217,6 +217,7 @@ function mergeAdjacentSegments(segments, threshold) {
 }
 
 function segmentsBBox(segments) {
+  if (segments.length === 0) return [0, 0, 0, 0];
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   for (const seg of segments) {
     for (const [x, y] of seg) {
