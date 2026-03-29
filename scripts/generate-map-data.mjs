@@ -399,29 +399,30 @@ async function main() {
       .filter((segment) => segment.length >= 2);
     const beforeCount = segments.length;
 
-    // Drop micro-fragments that survive simplification (Bug 2)
-    segments = segments.filter((seg) => segmentLength(seg) >= MIN_SEGMENT_PX);
-    const microRemoved = beforeCount - segments.length;
-    const preMergeBBox = segmentsBBox(segments);
-
-    // Merge adjacent segments with near-matching endpoints (Bug 1)
+    // Merge first so short segments get absorbed into neighbors
     segments = mergeAdjacentSegments(segments, MERGE_THRESHOLD);
+    const afterMergeCount = segments.length;
+    const gapsMerged = beforeCount - afterMergeCount;
+    const preMicroBBox = segmentsBBox(segments);
+
+    // Then drop any remaining isolated micro-fragments
+    segments = segments.filter((seg) => segmentLength(seg) >= MIN_SEGMENT_PX);
     const afterCount = segments.length;
-    const gapsMerged = beforeCount - microRemoved - afterCount;
+    const microRemoved = afterMergeCount - afterCount;
 
     totalGapsMerged += gapsMerged;
     totalMicroRemoved += microRemoved;
 
-    // Validation: segment count never increases, merge preserves bounding box
+    // Validation: segment count never increases
     if (afterCount > beforeCount) {
       console.error(`  WARNING: ${r.name} segment count increased ${beforeCount} → ${afterCount}`);
     }
     const afterBBox = segmentsBBox(segments);
-    const mergeDrift = Math.max(
-      ...preMergeBBox.map((v, i) => Math.abs(v - afterBBox[i]))
+    const microDrift = Math.max(
+      ...preMicroBBox.map((v, i) => Math.abs(v - afterBBox[i]))
     );
-    if (mergeDrift > MERGE_THRESHOLD) {
-      console.error(`  WARNING: ${r.name} merge shifted bounding box by ${mergeDrift.toFixed(1)}px`);
+    if (microDrift > MIN_SEGMENT_PX && microRemoved > 0) {
+      console.log(`  ${r.name}: micro-fragment removal shifted bbox by ${microDrift.toFixed(1)}px`);
     }
 
     if (gapsMerged > 0 || microRemoved > 0) {
