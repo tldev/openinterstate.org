@@ -142,6 +142,94 @@ function toMultiPath(segments) {
   return segments.map((segment) => toPath(segment)).filter(Boolean).join(" ");
 }
 
+// --- Segment merging ---
+function ptDist(a, b) {
+  const dx = a[0] - b[0], dy = a[1] - b[1];
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function segmentLength(pts) {
+  let len = 0;
+  for (let i = 1; i < pts.length; i++) len += ptDist(pts[i], pts[i - 1]);
+  return len;
+}
+
+/**
+ * Greedily chain segments whose endpoints are within `threshold` SVG px.
+ * Drops the redundant near-duplicate point at each join.
+ */
+function mergeAdjacentSegments(segments, threshold) {
+  if (segments.length <= 1) return segments;
+  const used = new Uint8Array(segments.length);
+  const chains = [];
+
+  for (let seed = 0; seed < segments.length; seed++) {
+    if (used[seed]) continue;
+    used[seed] = 1;
+    const chain = segments[seed].slice();
+
+    let extended = true;
+    while (extended) {
+      extended = false;
+      const cEnd = chain[chain.length - 1];
+      const cStart = chain[0];
+      let bestJ = -1, bestD = threshold, bestMode = "";
+
+      for (let j = 0; j < segments.length; j++) {
+        if (used[j]) continue;
+        const s = segments[j];
+        const sStart = s[0], sEnd = s[s.length - 1];
+        let d;
+
+        d = ptDist(cEnd, sStart);
+        if (d < bestD) { bestD = d; bestJ = j; bestMode = "append"; }
+        d = ptDist(cEnd, sEnd);
+        if (d < bestD) { bestD = d; bestJ = j; bestMode = "append-rev"; }
+        d = ptDist(cStart, sEnd);
+        if (d < bestD) { bestD = d; bestJ = j; bestMode = "prepend"; }
+        d = ptDist(cStart, sStart);
+        if (d < bestD) { bestD = d; bestJ = j; bestMode = "prepend-rev"; }
+      }
+
+      if (bestJ >= 0) {
+        used[bestJ] = 1;
+        extended = true;
+        const s = segments[bestJ];
+        switch (bestMode) {
+          case "append":
+            chain.push(...s.slice(1));
+            break;
+          case "append-rev":
+            for (let k = s.length - 2; k >= 0; k--) chain.push(s[k]);
+            break;
+          case "prepend":
+            chain.unshift(...s.slice(0, -1));
+            break;
+          case "prepend-rev":
+            chain.unshift(...s.slice(1).reverse());
+            break;
+        }
+      }
+    }
+    chains.push(chain);
+  }
+  return chains;
+}
+
+function segmentsBBox(segments) {
+  if (segments.length === 0) return [0, 0, 0, 0];
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const seg of segments) {
+    for (const [x, y] of seg) {
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+  }
+  return [minX, minY, maxX, maxY];
+}
+
 // --- Fetch state boundaries ---
 async function fetchStates() {
   const url = "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json";
@@ -300,10 +388,48 @@ async function main() {
   const ROUTE_TOL = 0.7; // px tolerance for routes
   const STATE_TOL = 1.0; // px tolerance for states
 
+  const MERGE_THRESHOLD = 1.5; // SVG px — max endpoint gap to merge
+  const MIN_SEGMENT_PX = 5;    // SVG px — drop micro-fragments shorter than this
+
+  let totalGapsMerged = 0, totalMicroRemoved = 0;
+
   const interstates = rawInterstates.map((r) => {
-    const segments = r.projectedSegments
+    let segments = r.projectedSegments
       .map((segment) => simplify(segment.map(tx), ROUTE_TOL))
       .filter((segment) => segment.length >= 2);
+    const beforeCount = segments.length;
+
+    // Drop micro-fragments that survive simplification (Bug 2)
+    segments = segments.filter((seg) => segmentLength(seg) >= MIN_SEGMENT_PX);
+    const microRemoved = beforeCount - segments.length;
+    const preMergeBBox = segmentsBBox(segments);
+
+    // Merge adjacent segments with near-matching endpoints (Bug 1)
+    segments = mergeAdjacentSegments(segments, MERGE_THRESHOLD);
+    const afterCount = segments.length;
+    const gapsMerged = beforeCount - microRemoved - afterCount;
+
+    totalGapsMerged += gapsMerged;
+    totalMicroRemoved += microRemoved;
+
+    // Validation: segment count never increases, merge preserves bounding box
+    if (afterCount > beforeCount) {
+      console.error(`  WARNING: ${r.name} segment count increased ${beforeCount} → ${afterCount}`);
+    }
+    const afterBBox = segmentsBBox(segments);
+    const mergeDrift = Math.max(
+      ...preMergeBBox.map((v, i) => Math.abs(v - afterBBox[i]))
+    );
+    if (mergeDrift > MERGE_THRESHOLD) {
+      console.error(`  WARNING: ${r.name} merge shifted bounding box by ${mergeDrift.toFixed(1)}px`);
+    }
+
+    if (gapsMerged > 0 || microRemoved > 0) {
+      console.log(`  ${r.name}: ${beforeCount} → ${afterCount} segments` +
+        (gapsMerged > 0 ? ` (${gapsMerged} gaps merged)` : "") +
+        (microRemoved > 0 ? ` (${microRemoved} micro removed)` : ""));
+    }
+
     const pts = segments.flat();
     const mid = pts[Math.floor(pts.length / 2)] || [0, 0];
     return {
@@ -317,6 +443,10 @@ async function main() {
       exits: r.exits,
     };
   });
+
+  if (totalGapsMerged > 0 || totalMicroRemoved > 0) {
+    console.log(`Segment cleanup: ${totalGapsMerged} gaps merged, ${totalMicroRemoved} micro-fragments removed`);
+  }
 
   const states = rawStates
     .map((ring) => {
