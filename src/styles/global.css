@@ -20,6 +20,7 @@ html {
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
@@ -34,6 +35,12 @@ a {
 
 a:hover {
   text-decoration: underline;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 /* layout */
@@ -107,12 +114,12 @@ h1, h2, h3 {
 
 h1 {
   font-size: 1.6rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
 }
 
 h2 {
-  font-size: 1.15rem;
-  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+  margin-bottom: 0.6rem;
 }
 
 h3 {
@@ -123,6 +130,14 @@ h3 {
 p, li {
   color: var(--muted);
   margin: 0 0 0.75rem;
+}
+
+.lead {
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1.65;
+  max-width: 44rem;
+  margin-bottom: 1rem;
 }
 
 /* sections */
@@ -156,6 +171,7 @@ pre {
   font-size: 0.87rem;
   line-height: 1.6;
   margin: 0.75rem 0;
+  font-variant-numeric: tabular-nums;
 }
 
 pre code {
@@ -170,12 +186,14 @@ table {
   border-collapse: collapse;
   font-size: 0.9rem;
   margin: 0.5rem 0 1rem;
+  font-variant-numeric: tabular-nums;
 }
 
 th, td {
   text-align: left;
-  padding: 0.5rem 1rem 0.5rem 0;
+  padding: 0.6rem 1.25rem 0.6rem 0;
   border-bottom: 1px solid var(--border);
+  transition: background 0.12s ease;
 }
 
 th {
@@ -199,20 +217,27 @@ tr:hover td {
 .stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 2rem;
-  margin: 0.5rem 0 0.75rem;
+  gap: 1.25rem 2.25rem;
+  margin: 0.75rem 0 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats > div {
+  min-width: 5.5rem;
 }
 
 .stat-val {
   font-weight: 700;
   color: var(--text);
-  font-size: 1.5rem;
-  line-height: 1.2;
+  font-size: 1.7rem;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
 }
 
 .stat-lbl {
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
+  margin-top: 0.15rem;
 }
 
 /* link lists */
@@ -286,7 +311,7 @@ li {
   }
 
   .stat-val {
-    font-size: 1.3rem;
+    font-size: 1.4rem;
   }
 
   table {
