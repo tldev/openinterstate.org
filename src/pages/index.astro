@@ -17,10 +17,11 @@ const tables = schema.core.tables.map((t) => [t.name, t.description.replace(/\.$
     <h1>US interstate highway data, built from OpenStreetMap</h1>
     <p class="lead">
       The interstate system is mapped in meticulous detail inside
-      OpenStreetMap, but using that data means planet files, a spatial
-      database, and a pile of conflation heuristics. OpenInterstate does that
-      work once per release and publishes the result as plain CSV: directional
-      corridors, ordered exits, linked places, and real drive times, dated and
+      OpenStreetMap, but using that data means downloading planet-scale
+      files, standing up a spatial database, and untangling how thousands of
+      mappers labeled the same roads. OpenInterstate does that work once per
+      release and publishes the result as plain CSV: directional corridors,
+      ordered exits, linked places, and real drive times, dated and
       checksummed under ODbL.
     </p>
   </section>
