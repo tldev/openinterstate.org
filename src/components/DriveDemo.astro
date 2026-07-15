@@ -23,9 +23,9 @@ const exitCount = demo.exits.length;
       <div class="drive-exit" id="drive-exit">EXIT</div>
       <div class="drive-services" id="drive-services"></div>
     </div>
-    <div class="drive-map" role="img" aria-label="OpenStreetMap view of places reachable from this exit">
+    <div class="drive-map" id="drive-map-box" role="img" aria-label="OpenStreetMap view of places reachable from this exit">
       <div class="drive-tiles" id="drive-tiles"></div>
-      <svg class="drive-overlay" id="drive-overlay" viewBox="0 0 240 200"></svg>
+      <svg class="drive-overlay" id="drive-overlay"></svg>
       <a class="drive-attrib" href="https://www.openstreetmap.org/copyright">&copy; OpenStreetMap</a>
     </div>
   </div>
@@ -37,6 +37,42 @@ const exitCount = demo.exits.length;
     </span>
   </div>
 </div>
+
+<svg style="display:none" aria-hidden="true">
+  <symbol id="oi-ic-gas" viewBox="0 0 24 24">
+    <path d="M5 2a1 1 0 0 0-1 1v18h11V3a1 1 0 0 0-1-1H5z"/>
+    <rect x="6" y="4.5" width="7" height="4.5" rx="0.5" fill="var(--bg)"/>
+    <path d="M16.5 9.5V8l2.6-2.6 1.1 1.1-2.1 2.1v7.9a2.6 2.6 0 1 1-5.2 0V14h1.6v2.5a1 1 0 0 0 2 0V9.5z"/>
+  </symbol>
+  <symbol id="oi-ic-food" viewBox="0 0 24 24">
+    <path d="M7 2h1.4v5.2h1V2h1.4v5.2h1V2h1.4v6.4a2.6 2.6 0 0 1-2 2.53L11.5 22h-2l.3-11.07a2.6 2.6 0 0 1-2-2.53V2z"/>
+    <path d="M17.5 2c-1.6 2.6-2.3 5-2.3 7.1 0 1.6.7 2.7 1.8 3.2L16.6 22h2l-.3-20h-.8z"/>
+  </symbol>
+  <symbol id="oi-ic-lodging" viewBox="0 0 24 24">
+    <path d="M2.5 5.5H4v9h16.5v-3.2a3.3 3.3 0 0 0-3.3-3.3H10v5H4v-7.5H2.5z" transform="translate(0 1.5)"/>
+    <circle cx="7" cy="11.5" r="1.9"/>
+    <path d="M2.5 16h1.5v3h-1.5zM20 16h1.5v3H20z"/>
+    <path d="M2.5 14.5h19V16h-19z"/>
+  </symbol>
+  <symbol id="oi-ic-ev" viewBox="0 0 24 24">
+    <path d="M13.5 2 5 13.5h5L8.5 22 17 10.5h-5L13.5 2z"/>
+  </symbol>
+  <symbol id="oi-ic-rest" viewBox="0 0 24 24">
+    <path d="M4 8h16v2h-4.1l2.5 9h-2l-.9-3.2H8.5L7.6 19h-2l2.5-9H4V8zm6.1 2-.6 2.3h5l-.6-2.3h-3.8zM9 4h6v2H9z"/>
+  </symbol>
+  <symbol id="oi-ic-park" viewBox="0 0 24 24">
+    <path d="M12 2 6.5 10.5h3L5 17.5h5.5V22h3v-4.5H19l-4.5-7h3L12 2z"/>
+  </symbol>
+  <symbol id="oi-ic-dog" viewBox="0 0 24 24">
+    <circle cx="6.5" cy="9" r="2"/>
+    <circle cx="12" cy="6.5" r="2"/>
+    <circle cx="17.5" cy="9" r="2"/>
+    <path d="M12 10.5c-3.2 0-5.8 2.4-5.8 4.9 0 1.8 1.4 2.7 2.8 2.7 1 0 2-.5 3-.5s2 .5 3 .5c1.4 0 2.8-.9 2.8-2.7 0-2.5-2.6-4.9-5.8-4.9z"/>
+  </symbol>
+  <symbol id="oi-ic-place" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="5"/>
+  </symbol>
+</svg>
 
 <script type="application/json" id="drive-data" set:html={JSON.stringify(demo.exits)} />
 
@@ -54,8 +90,7 @@ const exitCount = demo.exits.length;
   const btn = document.getElementById("drive-btn") as HTMLButtonElement;
 
   const total = exits.length;
-  const W = 240;
-  const H = 200;
+  const mapBox = document.getElementById("drive-map-box")!;
   const TILE = 256;
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -69,6 +104,17 @@ const exitCount = demo.exits.length;
     return s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
   }
 
+  const ICONS: Record<string, string> = {
+    gas: "gas",
+    food: "food",
+    lodging: "lodging",
+    "EV charging": "ev",
+    "rest area": "rest",
+    park: "park",
+    "dog park": "dog",
+  };
+  const icon = (cat: string) => `#oi-ic-${ICONS[cat] || "place"}`;
+
   // Web Mercator world pixels at zoom z.
   function worldX(lon: number, z: number) {
     return ((lon + 180) / 360) * (1 << z) * TILE;
@@ -79,6 +125,10 @@ const exitCount = demo.exits.length;
   }
 
   function renderMap(i: number) {
+    const W = mapBox.clientWidth;
+    const H = mapBox.clientHeight;
+    overlay.setAttribute("viewBox", `0 0 ${W} ${H}`);
+
     const e = exits[i];
     const pts = [{ lat: e.ll[0], lon: e.ll[1], min: 0, isExit: true }];
     for (const [, , min, dlat, dlon] of e.p) {
@@ -90,7 +140,7 @@ const exitCount = demo.exits.length;
     for (; z > 11; z--) {
       const xs = pts.map((p) => worldX(p.lon, z));
       const ys = pts.map((p) => worldY(p.lat, z));
-      if (Math.max(...xs) - Math.min(...xs) <= W - 48 && Math.max(...ys) - Math.min(...ys) <= H - 48) break;
+      if (Math.max(...xs) - Math.min(...xs) <= W - 52 && Math.max(...ys) - Math.min(...ys) <= H - 52) break;
     }
 
     const xs = pts.map((p) => worldX(p.lon, z));
@@ -119,20 +169,41 @@ const exitCount = demo.exits.length;
     const x1 = px(e.ll[1]);
     const y1 = py(e.ll[0]);
 
+    // Fan out places that share a location (service plazas put every
+    // amenity in one building) so each badge stays visible.
+    const raw = pts.slice(1).map((p) => ({ ...p, x: px(p.lon), y: py(p.lat) }));
+    const clusters = new Map<string, number[]>();
+    raw.forEach((p, idx) => {
+      const key = `${Math.round(p.x / 16)},${Math.round(p.y / 16)}`;
+      if (!clusters.has(key)) clusters.set(key, []);
+      clusters.get(key)!.push(idx);
+    });
+    for (const members of clusters.values()) {
+      if (members.length < 2) continue;
+      const mx = members.reduce((s, m) => s + raw[m].x, 0) / members.length;
+      const my = members.reduce((s, m) => s + raw[m].y, 0) / members.length;
+      members.forEach((m, k) => {
+        const a = (k / members.length) * Math.PI * 2 - Math.PI / 2;
+        raw[m].x = mx + Math.cos(a) * 14;
+        raw[m].y = my + Math.sin(a) * 14;
+      });
+    }
+
     let svg = "";
     const labels: { x: number; y: number; anchor: string; text: string; order: number }[] = [];
-    pts.slice(1).forEach((p, idx) => {
-      const x2 = px(p.lon);
-      const y2 = py(p.lat);
+    raw.forEach((p, idx) => {
+      const x2 = p.x;
+      const y2 = p.y;
       const dx = x2 - x1;
       const dy = y2 - y1;
       const len = Math.hypot(dx, dy) || 1;
       const cxq = (x1 + x2) / 2 - (dy / len) * len * 0.18;
       const cyq = (y1 + y2) / 2 + (dx / len) * len * 0.18;
+      const cat = e.p[idx][1];
       svg += `<path class="drive-conn" data-order="${idx}" d="M ${x1.toFixed(1)} ${y1.toFixed(1)} Q ${cxq.toFixed(1)} ${cyq.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}" />`;
-      svg += `<circle class="drive-poi" data-order="${idx}" cx="${x2.toFixed(1)}" cy="${y2.toFixed(1)}" r="3" />`;
+      svg += `<g class="drive-poi" data-order="${idx}"><circle class="drive-poi-bg" cx="${x2.toFixed(1)}" cy="${y2.toFixed(1)}" r="8" /><use class="drive-poi-ic" href="${icon(cat)}" x="${(x2 - 5).toFixed(1)}" y="${(y2 - 5).toFixed(1)}" width="10" height="10" /></g>`;
       labels.push({
-        x: x2 + (x2 >= x1 ? 7 : -7),
+        x: x2 + (x2 >= x1 ? 12 : -12),
         y: y2 + 3,
         anchor: x2 >= x1 ? "start" : "end",
         text: `${p.min} min`,
@@ -143,7 +214,7 @@ const exitCount = demo.exits.length;
     for (const side of ["start", "end"]) {
       const group = labels.filter((l) => l.anchor === side).sort((a, b) => a.y - b.y);
       for (let g = 1; g < group.length; g++) {
-        if (group[g].y - group[g - 1].y < 11) group[g].y = group[g - 1].y + 11;
+        if (group[g].y - group[g - 1].y < 12) group[g].y = group[g - 1].y + 12;
       }
     }
     for (const l of labels) {
@@ -177,7 +248,7 @@ const exitCount = demo.exits.length;
       services.innerHTML = e.p
         .map(
           ([label, cat, min]) =>
-            `<div class="drive-row"><span class="drive-cat">${escapeHtml(cat)}</span><span class="drive-place">${escapeHtml(label)}</span><span class="drive-min">${min} min</span></div>`
+            `<div class="drive-row"><span class="drive-cat"><svg class="drive-ic" aria-hidden="true"><use href="${icon(cat)}" /></svg>${escapeHtml(cat)}</span><span class="drive-place">${escapeHtml(label)}</span><span class="drive-min">${min} min</span></div>`
         )
         .join("");
     } else {
@@ -195,10 +266,11 @@ const exitCount = demo.exits.length;
     renderMap(i);
   }
 
-  // Start somewhere with a full card so the first impression is rich.
-  let start = 0;
-  for (let i = Math.floor(total * 0.55); i < total; i++) {
-    if (exits[i].p.length === 3) {
+  // Start in the early middle of the corridor, at an exit rich enough to
+  // make a good first card.
+  let start = Math.floor(total * 0.28);
+  for (let i = start; i < total; i++) {
+    if (exits[i].p.length >= 5) {
       start = i;
       break;
     }
@@ -211,7 +283,27 @@ const exitCount = demo.exits.length;
     render(Number(range.value));
   });
 
+  let resizeTimer: ReturnType<typeof setTimeout> | null = null;
+  window.addEventListener("resize", () => {
+    if (resizeTimer !== null) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => renderMap(Number(range.value)), 150);
+  });
+
   let timer: ReturnType<typeof setInterval> | null = null;
+
+  function startDriving() {
+    if (timer !== null) return;
+    btn.textContent = "Stop";
+    timer = setInterval(() => {
+      const next = Number(range.value) + 1;
+      if (next >= total) {
+        stopDriving();
+        return;
+      }
+      range.value = String(next);
+      render(next);
+    }, 1600);
+  }
 
   function stopDriving() {
     if (timer !== null) {
@@ -222,19 +314,29 @@ const exitCount = demo.exits.length;
   }
 
   btn.addEventListener("click", () => {
-    if (timer !== null) {
-      stopDriving();
-      return;
-    }
-    btn.textContent = "Stop";
-    timer = setInterval(() => {
-      const next = Number(range.value) + 1;
-      if (next >= total) {
-        stopDriving();
-        return;
-      }
-      range.value = String(next);
-      render(next);
-    }, 800);
+    if (timer !== null) stopDriving();
+    else startDriving();
+  });
+
+  // Drive automatically the first time the widget scrolls into view.
+  if (!reducedMotion) {
+    let autoStarted = false;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting && !autoStarted) {
+            autoStarted = true;
+            startDriving();
+            io.disconnect();
+          }
+        }
+      },
+      { threshold: 0.35 }
+    );
+    io.observe(document.querySelector(".drive")!);
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) stopDriving();
   });
 </script>

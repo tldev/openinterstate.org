@@ -163,7 +163,7 @@ for (const e of exits) {
   }
   scored.sort((a, b) => b.score - a.score || a.min - b.min);
   const top = scored
-    .slice(0, 3)
+    .slice(0, 6)
     .map((p) => [
       p.label,
       p.cat,
