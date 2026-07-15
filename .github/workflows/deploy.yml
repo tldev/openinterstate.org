@@ -27,3 +27,26 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: npm run deploy
+
+      # The zone edge-caches HTML, so a deploy is not visible until the cache
+      # rolls. Purge it; if the token lacks zone permissions this warns
+      # instead of failing (grant Zone:Read + Cache Purge to enable).
+      - name: Purge Cloudflare cache
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          ZONE_ID=$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/zones?name=openinterstate.org" 2>/dev/null \
+            | python3 -c "import json,sys; r=json.load(sys.stdin).get('result') or []; print(r[0]['id'] if r else '')" || true)
+          if [ -z "$ZONE_ID" ]; then
+            echo "::warning::Token cannot read the zone. Grant Zone:Read + Cache Purge to CLOUDFLARE_API_TOKEN to purge automatically."
+            exit 0
+          fi
+          if curl -fsS -X POST -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}' \
+            "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/purge_cache" > /dev/null; then
+            echo "Cache purged."
+          else
+            echo "::warning::Cache purge failed. Grant Cache Purge to CLOUDFLARE_API_TOKEN to purge automatically."
+          fi
