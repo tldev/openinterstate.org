@@ -268,6 +268,78 @@ li {
   padding: 0.15rem 0;
 }
 
+/* table-of-contents rail (data page) */
+
+h2[id], h3[id] {
+  scroll-margin-top: 1.5rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+.toc {
+  display: none;
+}
+
+@media (min-width: 1240px) {
+  .toc {
+    display: block;
+    position: fixed;
+    top: 7rem;
+    left: max(1rem, calc(50% - 26rem - 13.5rem));
+    width: 11.5rem;
+    max-height: calc(100vh - 9rem);
+    overflow-y: auto;
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+}
+
+.toc a,
+.toc-label {
+  display: block;
+  color: var(--muted);
+  margin: 0;
+  padding: 0.14rem 0 0.14rem 0.6rem;
+  border-left: 1px solid var(--border);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.toc a:hover {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.toc a.active {
+  color: var(--text);
+  border-left-color: var(--accent);
+  font-weight: 700;
+}
+
+.toc ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.toc ul a {
+  padding-left: 1.4rem;
+}
+
+.toc li {
+  padding: 0;
+  margin: 0;
+}
+
+.toc-group + .toc-group > a:first-child,
+.toc-group + .toc-group > .toc-label:first-child {
+  padding-top: 0.75rem;
+}
+
 /* footer */
 
 .footer {

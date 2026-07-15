@@ -1,0 +1,48 @@
+---
+const { groups } = Astro.props;
+---
+
+<nav class="toc" aria-label="On this page">
+  {groups.map((g) => (
+    <div class="toc-group">
+      {g.id ? <a href={`#${g.id}`}>{g.label}</a> : <span class="toc-label">{g.label}</span>}
+      {g.children.length > 0 && (
+        <ul>
+          {g.children.map((c) => (
+            <li><a href={`#${c.id}`}>{c.label}</a></li>
+          ))}
+        </ul>
+      )}
+    </div>
+  ))}
+</nav>
+
+<script>
+  const links = [...document.querySelectorAll<HTMLAnchorElement>(".toc a")];
+  const targets = links
+    .map((link) => document.getElementById(decodeURIComponent(link.hash.slice(1))))
+    .filter((el): el is HTMLElement => el !== null);
+
+  let ticking = false;
+
+  function highlight() {
+    ticking = false;
+    let current = targets[0];
+    for (const target of targets) {
+      if (target.getBoundingClientRect().top <= 120) current = target;
+    }
+    for (const link of links) {
+      link.classList.toggle("active", decodeURIComponent(link.hash.slice(1)) === current?.id);
+    }
+  }
+
+  function onScroll() {
+    if (!ticking) {
+      ticking = true;
+      requestAnimationFrame(highlight);
+    }
+  }
+
+  addEventListener("scroll", onScroll, { passive: true });
+  highlight();
+</script>

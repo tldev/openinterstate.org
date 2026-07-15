@@ -1,0 +1,140 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Toc from "../components/Toc.astro";
+import schema from "../data/schema.json";
+
+const { core, reachability } = schema;
+
+const tocGroups = [
+  { id: "core-tables", label: "Core tables", children: core.tables.map((t) => ({ id: t.name, label: t.name })) },
+  { id: "reachability-tables", label: "Reachability tables", children: reachability.tables.map((t) => ({ id: t.name, label: t.name })) },
+  { id: "formats", label: "Formats", children: [] },
+];
+---
+
+<BaseLayout
+  title="Interstate Highway Data Schema | OpenInterstate"
+  description="Every table and column in the OpenInterstate releases: corridors, exits, and places on the US interstate highway system, plus OSRM drive-time reachability scores."
+>
+  <Toc groups={tocGroups} />
+
+  <section>
+    <h1>Schema</h1>
+    <p class="lead">
+      Two datasets share one model. The core release ships tables built around
+      stable public nouns (corridors, exits, places, and the links between
+      them), and the reachability release scores exit-place pairs that join
+      back to those tables. This page is generated from each repo's
+      datapackage.json, following the
+      <a href="https://datapackage.org/">Data Package standard</a>.
+    </p>
+  </section>
+
+  <section>
+    <h2 id="core-tables">Core tables</h2>
+    <p>Documented against {core.describes_release}.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {core.tables.map((t) => (
+          <tr>
+            <td><a href={`#${t.name}`}>{t.name}</a></td>
+            <td>{t.description}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </section>
+
+  {core.tables.map((t) => (
+    <section>
+      <h3 id={t.name}>{t.name}</h3>
+      <p>{t.description} {t.note}</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Column</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          {t.columns.map((c) => (
+            <tr>
+              <td>{c.name}</td>
+              <td>{c.type}</td>
+              <td>{c.description}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  ))}
+
+  <hr />
+
+  <section>
+    <h2 id="reachability-tables">Reachability tables</h2>
+    <p>
+      Reachability is computed with OSRM routing and documented against
+      {reachability.describes_release}. Scores run 0 to 100, higher is easier
+      to reach, and every row joins back to the core tables through
+      <code>exit_id</code> and <code>place_id</code>.
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {reachability.tables.map((t) => (
+          <tr>
+            <td><a href={`#${t.name}`}>{t.name}</a></td>
+            <td>{t.description}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </section>
+
+  {reachability.tables.map((t) => (
+    <section>
+      <h3 id={t.name}>{t.name}</h3>
+      <p>{t.description} {t.note}</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Column</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          {t.columns.map((c) => (
+            <tr>
+              <td>{c.name}</td>
+              <td>{c.type}</td>
+              <td>{c.description}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  ))}
+
+  <section>
+    <h2 id="formats">Formats</h2>
+    <p>
+      Both datasets favor files you can open right now: plain CSV, GPX, and
+      GeoJSON, with transparent lineage. Parquet and GeoParquet packaging will
+      follow once the release path is stable.
+    </p>
+  </section>
+</BaseLayout>

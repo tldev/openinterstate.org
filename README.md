@@ -11,11 +11,9 @@ Website and docs for OpenInterstate.
 
 1. home
 2. data
-3. API
-4. docs
-5. releases
-6. about
-7. contribute
+3. releases
+4. about
+5. contribute
 
 ## Development
 

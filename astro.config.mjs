@@ -4,5 +4,8 @@ import sitemap from "@astrojs/sitemap";
 
 export default defineConfig({
   site: "https://openinterstate.org",
-  integrations: [sitemap()]
+  integrations: [sitemap()],
+  redirects: {
+    "/data": "/schema"
+  }
 });

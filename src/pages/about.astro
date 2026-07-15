@@ -2,21 +2,25 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout title="About — OpenInterstate">
+<BaseLayout
+  title="About | OpenInterstate"
+  description="OpenInterstate is a public open data project for the US interstate highway system, built on neutral names, reproducible releases, and explicit lineage."
+>
   <section>
     <h1>About</h1>
     <p class="lead">
-      OpenInterstate is a public data infrastructure project. It exists
-      independently of any single application. Downstream consumers do not
-      define the public contract.
+      OpenInterstate is public data infrastructure for the US interstate
+      highway system, maintained independently of any single app or vendor.
+      The published contract defines the data, and downstream tools adapt to
+      it rather than the other way around.
     </p>
   </section>
 
   <section>
     <h2>Principles</h2>
     <ul>
-      <li>Use neutral public names</li>
-      <li>Publish reproducible releases</li>
+      <li>Use neutral, boring public names</li>
+      <li>Publish reproducible, checksummed releases</li>
       <li>Keep lineage and attribution explicit</li>
       <li>Optimize for developers and GIS users first</li>
     </ul>

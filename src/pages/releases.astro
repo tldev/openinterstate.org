@@ -1,50 +1,124 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import Toc from "../components/Toc.astro";
 import { release, reachabilityRelease } from "../data/releases";
+
+const tocGroups = [
+  { label: "Core", children: [{ id: release.tag, label: release.tag }] },
+  { label: "Reachability", children: [{ id: reachabilityRelease.tag, label: reachabilityRelease.tag }] },
+];
+
+const artifacts = [
+  [release.archiveUrl, "release archive", "CSV tables, GPX reference routes, and GeoJSON examples in one .tar.gz"],
+  [release.manifestUrl, "manifest.json", "What the archive contains"],
+  [release.sourceLineageUrl, "source_lineage.json", "The OSM extract this release was built from"],
+  [release.checksumsUrl, "checksums.txt", "Checksums for verifying your download"],
+];
+
+const reachabilityArtifacts = [
+  [reachabilityRelease.scoresUrl, "reachability.csv", "One row of drive-time scores per scored exit-place pair"],
+  [reachabilityRelease.snapHintsUrl, "osrm_snap_hints.csv", "OSRM snap hints that speed up incremental scoring runs"],
+];
 ---
 
-<BaseLayout title="Releases — OpenInterstate">
+<BaseLayout
+  title="Download Interstate Data Releases | OpenInterstate"
+  description="Dated, checksummed releases of US interstate highway data. Download CSV tables, GPX reference routes, and GeoJSON examples with full source lineage."
+>
+  <Toc groups={tocGroups} />
+
   <section>
     <h1>Releases</h1>
-    <p class="lead">Dated, checksummed, with published lineage.</p>
+    <p class="lead">
+      Every release is dated, checksummed, and traceable to the exact OSM
+      extract it was built from.
+    </p>
   </section>
 
   <section>
-    <h2>{release.tag}</h2>
+    <h2 id={release.tag}>{release.tag}</h2>
     <p>
-      647 corridors, 96,366 exits, 109,647 places, 468,361 exit-place links, 263 reference routes.
-      Built from the raw U.S. OSM PBF with standalone OpenInterstate tooling.
+      This is the latest release, cut {release.date} from the raw US OSM PBF
+      with standalone OpenInterstate tooling.
     </p>
+
+    <div class="stats">
+      {release.stats.map(([val, lbl]) => (
+        <div>
+          <div class="stat-val">{val}</div>
+          <div class="stat-lbl">{lbl}</div>
+        </div>
+      ))}
+    </div>
 
     <pre><code>curl -LO \
   {release.archiveUrl}</code></pre>
 
-    <h3>Artifacts</h3>
-    <ul class="links">
-      <li><a href={release.archiveUrl}>Release archive (.tar.gz)</a></li>
-      <li><a href={release.manifestUrl}>manifest.json</a></li>
-      <li><a href={release.sourceLineageUrl}>source_lineage.json</a></li>
-      <li><a href={release.checksumsUrl}>checksums.txt</a></li>
-      <li><a href={release.githubUrl}>GitHub release page</a></li>
-    </ul>
+    <table>
+      <thead>
+        <tr>
+          <th>Artifact</th>
+          <th>What it is</th>
+        </tr>
+      </thead>
+      <tbody>
+        {artifacts.map(([url, name, desc]) => (
+          <tr>
+            <td><a href={url}>{name}</a></td>
+            <td>{desc}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+    <p>
+      The same files are attached to the
+      <a href={release.githubUrl}>GitHub release page</a>.
+    </p>
   </section>
 
-  <section>
-    <h2>Reachability scores</h2>
-    <p>
-      Reachability scores are published separately from
-      <a href="https://github.com/tldev/openinterstate-reachability">openinterstate-reachability</a>.
-    </p>
-    <p>
-      Latest: <a href={reachabilityRelease.githubUrl}>{reachabilityRelease.tag}</a>
-    </p>
-  </section>
+  <hr />
 
   <section>
-    <h2>Format</h2>
+    <h2 id={reachabilityRelease.tag}>{reachabilityRelease.tag}</h2>
     <p>
-      CSV tables + GPX reference routes + GeoJSON examples. V1 favors usability
-      over stricter packaging.
+      These are drive-time reachability scores between exits and nearby
+      places, cut {reachabilityRelease.date} against
+      {reachabilityRelease.against} and published from the separate
+      <a href="https://github.com/tldev/openinterstate-reachability">openinterstate-reachability</a>
+      repo.
+    </p>
+
+    <div class="stats">
+      {reachabilityRelease.stats.map(([val, lbl]) => (
+        <div>
+          <div class="stat-val">{val}</div>
+          <div class="stat-lbl">{lbl}</div>
+        </div>
+      ))}
+    </div>
+
+    <pre><code>curl -LO \
+  {reachabilityRelease.scoresUrl}</code></pre>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Artifact</th>
+          <th>What it is</th>
+        </tr>
+      </thead>
+      <tbody>
+        {reachabilityArtifacts.map(([url, name, desc]) => (
+          <tr>
+            <td><a href={url}>{name}</a></td>
+            <td>{desc}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+    <p>
+      The same files are attached to the
+      <a href={reachabilityRelease.githubUrl}>GitHub release page</a>.
     </p>
   </section>
 </BaseLayout>

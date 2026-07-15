@@ -1,0 +1,393 @@
+{
+  "core": {
+    "describes_release": "release-2026-07-13-gha-33",
+    "tables": [
+      {
+        "name": "corridors",
+        "description": "Contiguous directional interstate corridors.",
+        "columns": [
+          {
+            "name": "corridor_id",
+            "type": "integer",
+            "description": "Stable identifier for one directional corridor."
+          },
+          {
+            "name": "interstate_name",
+            "type": "string",
+            "description": "Interstate the corridor belongs to, like I-10."
+          },
+          {
+            "name": "direction_code",
+            "type": "string",
+            "description": "Canonical travel direction, like east."
+          },
+          {
+            "name": "direction_label",
+            "type": "string",
+            "description": "Capitalized form of direction_code."
+          },
+          {
+            "name": "geometry_geojson",
+            "type": "geojson",
+            "description": "Corridor geometry as GeoJSON LineString or MultiLineString text."
+          },
+          {
+            "name": "edge_count",
+            "type": "integer",
+            "description": "Number of graph edges assigned to the corridor."
+          }
+        ]
+      },
+      {
+        "name": "corridor_edges",
+        "description": "Graph edges assigned to corridors.",
+        "columns": [
+          {
+            "name": "edge_id",
+            "type": "string",
+            "description": "Deterministic edge identifier, like edge/I-35E/10125498410/82123455."
+          },
+          {
+            "name": "corridor_id",
+            "type": "integer",
+            "description": "Corridor the edge belongs to."
+          },
+          {
+            "name": "interstate_name",
+            "type": "string",
+            "description": "Interstate of the parent corridor."
+          },
+          {
+            "name": "direction_code",
+            "type": "string",
+            "description": "Canonical direction of the parent corridor."
+          },
+          {
+            "name": "length_m",
+            "type": "number",
+            "description": "Edge length in meters."
+          },
+          {
+            "name": "geometry_geojson",
+            "type": "geojson",
+            "description": "Edge geometry as GeoJSON LineString text."
+          }
+        ]
+      },
+      {
+        "name": "corridor_exits",
+        "description": "Normalized exits linked to a corridor.",
+        "columns": [
+          {
+            "name": "exit_id",
+            "type": "string",
+            "description": "OSM-derived exit identifier, like node/338162665."
+          },
+          {
+            "name": "corridor_id",
+            "type": "integer",
+            "description": "Corridor the exit sits on."
+          },
+          {
+            "name": "interstate_name",
+            "type": "string",
+            "description": "Interstate of the parent corridor."
+          },
+          {
+            "name": "direction_code",
+            "type": "string",
+            "description": "Canonical direction of the parent corridor."
+          },
+          {
+            "name": "sequence_index",
+            "type": "integer",
+            "description": "Zero-based position of the exit along the corridor."
+          },
+          {
+            "name": "exit_number",
+            "type": "string",
+            "description": "Posted exit number from OSM, like 1A. May be empty."
+          },
+          {
+            "name": "exit_name",
+            "type": "string",
+            "description": "Exit name from OSM. May be empty."
+          },
+          {
+            "name": "lat",
+            "type": "number",
+            "description": "Exit latitude in WGS84."
+          },
+          {
+            "name": "lon",
+            "type": "number",
+            "description": "Exit longitude in WGS84."
+          },
+          {
+            "name": "geometry_geojson",
+            "type": "geojson",
+            "description": "Exit location as GeoJSON Point text."
+          }
+        ]
+      },
+      {
+        "name": "exit_aliases",
+        "description": "Source exit aliases mapped to normalized exits.",
+        "note": "Ships empty in the current release. The alias-normalization layer is not yet populated.",
+        "columns": [
+          {
+            "name": "canonical_exit_id",
+            "type": "string",
+            "description": "Normalized exit that aliases collapse into."
+          },
+          {
+            "name": "source_exit_id",
+            "type": "string",
+            "description": "Source exit mapped onto the canonical exit."
+          }
+        ]
+      },
+      {
+        "name": "places",
+        "description": "Reachable places and services.",
+        "columns": [
+          {
+            "name": "place_id",
+            "type": "string",
+            "description": "OSM-derived place identifier, like node/10000051746."
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "description": "Place category, like evCharging or restArea."
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "description": "Name from OSM."
+          },
+          {
+            "name": "display_name",
+            "type": "string",
+            "description": "Name prepared for display."
+          },
+          {
+            "name": "brand",
+            "type": "string",
+            "description": "Brand from OSM. May be empty."
+          },
+          {
+            "name": "geometry_geojson",
+            "type": "geojson",
+            "description": "Place location as GeoJSON Point text."
+          }
+        ]
+      },
+      {
+        "name": "exit_place_links",
+        "description": "Spatial proximity links between exits and places.",
+        "columns": [
+          {
+            "name": "exit_id",
+            "type": "string",
+            "description": "Exit side of the link. Joins corridor_exits.exit_id."
+          },
+          {
+            "name": "place_id",
+            "type": "string",
+            "description": "Place side of the link. Joins places.place_id."
+          },
+          {
+            "name": "category",
+            "type": "string",
+            "description": "Category of the linked place."
+          },
+          {
+            "name": "distance_m",
+            "type": "number",
+            "description": "Distance from exit to place in meters."
+          },
+          {
+            "name": "rank",
+            "type": "integer",
+            "description": "Proximity rank of the place for this exit, starting at 1."
+          }
+        ]
+      },
+      {
+        "name": "reference_routes",
+        "description": "Routes for QA, examples, and exploration.",
+        "note": "Only corridors that meet the route-builder thresholds are emitted. Short corridors may appear in corridors.csv without a matching reference route.",
+        "columns": [
+          {
+            "name": "reference_route_id",
+            "type": "string",
+            "description": "Deterministic route identifier."
+          },
+          {
+            "name": "interstate_name",
+            "type": "string",
+            "description": "Interstate the route follows, like I-10."
+          },
+          {
+            "name": "direction_code",
+            "type": "string",
+            "description": "Compact direction code, like EB."
+          },
+          {
+            "name": "direction_label",
+            "type": "string",
+            "description": "Readable direction, like Eastbound."
+          },
+          {
+            "name": "display_name",
+            "type": "string",
+            "description": "Route name, like I-10 Eastbound."
+          },
+          {
+            "name": "distance_m",
+            "type": "number",
+            "description": "Route distance in meters."
+          },
+          {
+            "name": "duration_s",
+            "type": "number",
+            "description": "Estimated drive time in seconds."
+          },
+          {
+            "name": "point_count",
+            "type": "integer",
+            "description": "Number of coordinates in the route geometry."
+          },
+          {
+            "name": "geometry_geojson",
+            "type": "geojson",
+            "description": "Route geometry as GeoJSON LineString or MultiLineString text."
+          }
+        ]
+      }
+    ]
+  },
+  "reachability": {
+    "describes_release": "score-20260326-6c28d57",
+    "tables": [
+      {
+        "name": "reachability",
+        "description": "OSRM driving distance, duration, and a score per exit-place pair.",
+        "columns": [
+          {
+            "name": "exit_id",
+            "type": "string",
+            "description": "Exit being scored. Joins corridor_exits.exit_id in the core release."
+          },
+          {
+            "name": "place_id",
+            "type": "string",
+            "description": "Place being scored. Joins places.place_id in the core release."
+          },
+          {
+            "name": "route_distance_m",
+            "type": "integer",
+            "description": "OSRM driving distance in meters. Empty when the pair is unreachable."
+          },
+          {
+            "name": "route_duration_s",
+            "type": "integer",
+            "description": "OSRM driving time in seconds. Empty when the pair is unreachable."
+          },
+          {
+            "name": "reachable",
+            "type": "boolean",
+            "description": "Whether OSRM found a driving route between the pair (t or f)."
+          },
+          {
+            "name": "reachability_score",
+            "type": "number",
+            "description": "0 to 100, higher is easier to reach. Penalized by route distance and exit-to-place offset. 0 when unreachable."
+          },
+          {
+            "name": "reachability_confidence",
+            "type": "number",
+            "description": "Confidence in the score from 0 to 1. Decreases with route distance."
+          },
+          {
+            "name": "provider",
+            "type": "string",
+            "description": "Routing engine that scored the pair, currently osrm."
+          },
+          {
+            "name": "provider_dataset_version",
+            "type": "string",
+            "description": "Provider dataset version when recorded. May be empty."
+          },
+          {
+            "name": "updated_at",
+            "type": "datetime",
+            "description": "When the pair was scored, UTC."
+          }
+        ]
+      },
+      {
+        "name": "osrm_snap_hints",
+        "description": "Snapped coordinates and routing hints for incremental scoring runs.",
+        "columns": [
+          {
+            "name": "source_scope",
+            "type": "string",
+            "description": "Source scope for the endpoint, like product."
+          },
+          {
+            "name": "endpoint_kind",
+            "type": "string",
+            "description": "Kind of snapped endpoint, like exit."
+          },
+          {
+            "name": "endpoint_id",
+            "type": "string",
+            "description": "OSM-derived identifier of the endpoint."
+          },
+          {
+            "name": "dataset_key",
+            "type": "string",
+            "description": "Key for the snapping dataset and config that produced the hint."
+          },
+          {
+            "name": "input_lon",
+            "type": "number",
+            "description": "Original longitude before snapping, WGS84."
+          },
+          {
+            "name": "input_lat",
+            "type": "number",
+            "description": "Original latitude before snapping, WGS84."
+          },
+          {
+            "name": "snapped_lon",
+            "type": "number",
+            "description": "Longitude snapped onto the routable road network."
+          },
+          {
+            "name": "snapped_lat",
+            "type": "number",
+            "description": "Latitude snapped onto the routable road network."
+          },
+          {
+            "name": "hint",
+            "type": "string",
+            "description": "Opaque OSRM hint token reused to skip re-snapping on later runs."
+          },
+          {
+            "name": "snapped_distance_m",
+            "type": "number",
+            "description": "Distance moved from the input point to the snapped point in meters."
+          },
+          {
+            "name": "updated_at",
+            "type": "datetime",
+            "description": "When the hint was produced, UTC."
+          }
+        ]
+      }
+    ]
+  }
+}

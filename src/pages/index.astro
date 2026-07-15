@@ -2,24 +2,21 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import InterstateMap from "../components/InterstateMap.astro";
 import { release, reachabilityRelease } from "../data/releases";
+import schema from "../data/schema.json";
 
-const tables = [
-  ["corridors", "Contiguous directional interstate corridors"],
-  ["corridor_edges", "Graph edges assigned to corridors"],
-  ["corridor_exits", "Normalized exits linked to a corridor"],
-  ["exit_aliases", "Source exit aliases mapped to normalized exits"],
-  ["places", "Reachable places and services"],
-  ["exit_place_links", "Spatial proximity links between exits and places"],
-  ["reference_routes", "Routes for QA, examples, and exploration"],
-];
+const tables = schema.core.tables.map((t) => [t.name, t.description.replace(/\.$/, "")]);
 ---
 
-<BaseLayout>
+<BaseLayout
+  title="OpenInterstate | Open US Interstate Highway Data"
+  description="Download open US interstate highway data: 647 corridors, 96,366 exits, 109,647 linked places, and reference routes as CSV, GPX, and GeoJSON, built from OpenStreetMap."
+>
   <section>
-    <h1>Structured US interstate data from OpenStreetMap</h1>
+    <h1>US interstate highway data, built from OpenStreetMap</h1>
     <p class="lead">
       Directional corridors, normalized exits, linked places, and reference
-      routes — derived from raw OSM and published as dated, checksummed releases.
+      routes for the whole US interstate system, extracted from raw OSM and
+      published under ODbL as dated, checksummed releases.
     </p>
   </section>
 
@@ -27,40 +24,33 @@ const tables = [
 
   <section>
     <div class="stats">
-      <div>
-        <div class="stat-val">647</div>
-        <div class="stat-lbl">corridors</div>
-      </div>
-      <div>
-        <div class="stat-val">96,366</div>
-        <div class="stat-lbl">exits</div>
-      </div>
-      <div>
-        <div class="stat-val">109,647</div>
-        <div class="stat-lbl">places</div>
-      </div>
-      <div>
-        <div class="stat-val">468,361</div>
-        <div class="stat-lbl">exit-place links</div>
-      </div>
-      <div>
-        <div class="stat-val">263</div>
-        <div class="stat-lbl">reference routes</div>
-      </div>
+      {release.stats.map(([val, lbl]) => (
+        <div>
+          <div class="stat-val">{val}</div>
+          <div class="stat-lbl">{lbl}</div>
+        </div>
+      ))}
     </div>
   </section>
 
   <hr />
 
   <section>
-    <h2>Get the data</h2>
+    <h2>Download the data</h2>
     <pre><code>curl -LO \
   {release.archiveUrl}</code></pre>
     <p>
-      Or <a href="/releases">browse releases</a> for manifests, checksums, and lineage files.
+      That's the entire dataset in a single tarball, with no signup required.
+      Manifests, checksums, and lineage files live on the
+      <a href="/releases">releases page</a>.
     </p>
     <p>
-      Reachability scores are published separately:
+      Use it for trip planners, exit guides, routing experiments, or any GIS
+      project that needs the interstate network without parsing a planet-scale
+      OSM extract.
+    </p>
+    <p>
+      Drive-time reachability scores ship separately:
       <a href={reachabilityRelease.githubUrl}>openinterstate-reachability {reachabilityRelease.tag}</a>
     </p>
   </section>
@@ -69,7 +59,11 @@ const tables = [
 
   <section>
     <h2>What's in a release</h2>
-    <p>CSV tables, GPX reference routes, and GeoJSON examples.</p>
+    <p>
+      Each release ships these core CSV tables, plus GPX reference routes and
+      GeoJSON examples. Column-level docs live on the
+      <a href="/schema">schema page</a>.
+    </p>
     <table>
       <thead>
         <tr>
@@ -93,11 +87,9 @@ const tables = [
   <section>
     <h2>Links</h2>
     <ul class="links">
-      <li><a href="https://github.com/tldev/openinterstate">GitHub — core data</a></li>
-      <li><a href="https://github.com/tldev/openinterstate-reachability">GitHub — reachability</a></li>
-      <li><a href="/docs">Documentation</a></li>
-      <li><a href="/api">API reference</a></li>
-      <li><a href="/data">Data model</a></li>
+      <li><a href="https://github.com/tldev/openinterstate">Core data on GitHub</a></li>
+      <li><a href="https://github.com/tldev/openinterstate-reachability">Reachability scores on GitHub</a></li>
+      <li><a href="/schema">Schema</a></li>
     </ul>
   </section>
 </BaseLayout>
