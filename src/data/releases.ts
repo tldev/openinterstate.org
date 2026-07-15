@@ -21,14 +21,14 @@ export const release = {
 };
 
 export const reachabilityRelease = {
-  tag: "score-20260326-6c28d57",
-  date: "March 26, 2026",
-  against: "release-2026-03-25-gha-14",
-  stats: [["200,615", "reachability scores"]],
+  tag: "score-20260715-1351876",
+  date: "July 15, 2026",
+  against: "release-2026-07-13-gha-33",
+  stats: [["285,402", "reachability scores"]],
   scoresUrl:
-    "https://github.com/tldev/openinterstate-reachability/releases/download/score-20260326-6c28d57/reachability.csv",
+    "https://github.com/tldev/openinterstate-reachability/releases/download/score-20260715-1351876/reachability.csv",
   snapHintsUrl:
-    "https://github.com/tldev/openinterstate-reachability/releases/download/score-20260326-6c28d57/osrm_snap_hints.csv",
+    "https://github.com/tldev/openinterstate-reachability/releases/download/score-20260715-1351876/osrm_snap_hints.csv",
   githubUrl:
-    "https://github.com/tldev/openinterstate-reachability/releases/tag/score-20260326-6c28d57",
+    "https://github.com/tldev/openinterstate-reachability/releases/tag/score-20260715-1351876",
 };
