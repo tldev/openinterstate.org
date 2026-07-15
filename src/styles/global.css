@@ -334,6 +334,149 @@ h2[id], h3[id] {
   padding-top: 0.75rem;
 }
 
+/* drive demo */
+
+.drive {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem 1.25rem 1.1rem;
+  margin: 1rem 0 0.5rem;
+}
+
+.drive-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.drive-route {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.drive-pos {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.drive-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 2px;
+  background: var(--border);
+  border-radius: 1px;
+  margin: 0.4rem 0 1rem;
+  cursor: pointer;
+}
+
+.drive-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+}
+
+.drive-range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+}
+
+.drive-exit {
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5rem;
+}
+
+.drive-panel {
+  min-height: 7.2rem;
+}
+
+.drive-row {
+  display: flex;
+  gap: 1rem;
+  align-items: baseline;
+  padding: 0.22rem 0;
+  font-size: 0.9rem;
+}
+
+.drive-cat {
+  color: var(--muted);
+  font-size: 0.78rem;
+  width: 7.5rem;
+  flex-shrink: 0;
+}
+
+.drive-place {
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.drive-min {
+  margin-left: auto;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.drive-none {
+  color: var(--muted);
+}
+
+.drive-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--border);
+}
+
+.drive-btn {
+  font-family: var(--font);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.3rem 1rem;
+  cursor: pointer;
+}
+
+.drive-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.drive-src {
+  color: var(--muted);
+  font-size: 0.72rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .drive-cat {
+    width: 5rem;
+  }
+}
+
 /* footer */
 
 .footer {

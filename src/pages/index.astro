@@ -1,8 +1,10 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import InterstateMap from "../components/InterstateMap.astro";
+import DriveDemo from "../components/DriveDemo.astro";
 import { release, reachabilityRelease } from "../data/releases";
 import schema from "../data/schema.json";
+import driveDemo from "../data/drive-demo.json";
 
 const tables = schema.core.tables.map((t) => [t.name, t.description.replace(/\.$/, "")]);
 ---
@@ -14,9 +16,12 @@ const tables = schema.core.tables.map((t) => [t.name, t.description.replace(/\.$
   <section>
     <h1>US interstate highway data, built from OpenStreetMap</h1>
     <p class="lead">
-      Directional corridors, normalized exits, linked places, and reference
-      routes for the whole US interstate system, extracted from raw OSM and
-      published under ODbL as dated, checksummed releases.
+      The interstate system is mapped in meticulous detail inside
+      OpenStreetMap, but using that data means planet files, a spatial
+      database, and a pile of conflation heuristics. OpenInterstate does that
+      work once per release and publishes the result as plain CSV: directional
+      corridors, ordered exits, linked places, and real drive times, dated and
+      checksummed under ODbL.
     </p>
   </section>
 
@@ -31,6 +36,19 @@ const tables = schema.core.tables.map((t) => [t.name, t.description.replace(/\.$
         </div>
       ))}
     </div>
+  </section>
+
+  <hr />
+
+  <section>
+    <h2>Read the road ahead</h2>
+    <p>
+      This is the release doing its job. Scrub along {driveDemo.interstate}
+      {driveDemo.direction}, or press Drive: <code>corridor_exits</code>
+      orders the exits, <code>exit_place_links</code> attaches nearby places,
+      and the reachability release supplies real driving times.
+    </p>
+    <DriveDemo />
   </section>
 
   <hr />

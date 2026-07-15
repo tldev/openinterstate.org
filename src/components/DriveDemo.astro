@@ -1,0 +1,123 @@
+---
+import demo from "../data/drive-demo.json";
+
+const exitCount = demo.exits.length;
+---
+
+<div class="drive" data-interstate={demo.interstate} data-direction={demo.direction}>
+  <div class="drive-head">
+    <span class="drive-route">{demo.interstate} {demo.direction}</span>
+    <span class="drive-pos" id="drive-pos">1 of {exitCount.toLocaleString("en-US")} exits</span>
+  </div>
+  <input
+    type="range"
+    id="drive-range"
+    class="drive-range"
+    min="0"
+    max={exitCount - 1}
+    value="0"
+    aria-label={`Position along ${demo.interstate} ${demo.direction}`}
+  />
+  <div class="drive-panel">
+    <div class="drive-exit" id="drive-exit">EXIT</div>
+    <div class="drive-services" id="drive-services"></div>
+  </div>
+  <div class="drive-foot">
+    <button type="button" class="drive-btn" id="drive-btn">Drive</button>
+    <span class="drive-src">
+      data: <a href={`https://github.com/tldev/openinterstate/releases/tag/${demo.release}`}>{demo.release}</a>
+      + <a href={`https://github.com/tldev/openinterstate-reachability/releases/tag/${demo.scoreRelease}`}>{demo.scoreRelease}</a>
+    </span>
+  </div>
+</div>
+
+<script type="application/json" id="drive-data" set:html={JSON.stringify(demo.exits)} />
+
+<script>
+  const exits = JSON.parse(document.getElementById("drive-data")!.textContent!);
+  const range = document.getElementById("drive-range") as HTMLInputElement;
+  const pos = document.getElementById("drive-pos")!;
+  const exitEl = document.getElementById("drive-exit")!;
+  const services = document.getElementById("drive-services")!;
+  const btn = document.getElementById("drive-btn") as HTMLButtonElement;
+
+  const total = exits.length;
+
+  function exitLabel(e: { n: string; name: string }) {
+    if (e.n) return `EXIT ${e.n}`;
+    if (e.name) return e.name.toUpperCase();
+    return "UNNUMBERED EXIT";
+  }
+
+  function render(i: number) {
+    const e = exits[i];
+    pos.textContent = `${(i + 1).toLocaleString("en-US")} of ${total.toLocaleString("en-US")} exits`;
+    exitEl.textContent = exitLabel(e);
+    if (e.p.length > 0) {
+      services.innerHTML = e.p
+        .map(
+          ([label, cat, min]: [string, string, number]) =>
+            `<div class="drive-row"><span class="drive-cat">${escapeHtml(cat)}</span><span class="drive-place">${escapeHtml(label)}</span><span class="drive-min">${min} min</span></div>`
+        )
+        .join("");
+    } else {
+      let ahead = 0;
+      for (let j = i + 1; j < total; j++) {
+        if (exits[j].p.length > 0) {
+          ahead = j - i;
+          break;
+        }
+      }
+      services.innerHTML = ahead
+        ? `<div class="drive-row drive-none">No scored services here. Next services: ${escapeHtml(exitLabel(exits[i + ahead]).toLowerCase())}, ${ahead} exit${ahead === 1 ? "" : "s"} ahead.</div>`
+        : `<div class="drive-row drive-none">No scored services ahead. You have reached the end of the corridor.</div>`;
+    }
+  }
+
+  function escapeHtml(s: string) {
+    return s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+  }
+
+  // Start somewhere with a full card so the first impression is rich.
+  let start = 0;
+  for (let i = Math.floor(total * 0.55); i < total; i++) {
+    if (exits[i].p.length === 3) {
+      start = i;
+      break;
+    }
+  }
+  range.value = String(start);
+  render(start);
+
+  range.addEventListener("input", () => {
+    stopDriving();
+    render(Number(range.value));
+  });
+
+  let timer: ReturnType<typeof setInterval> | null = null;
+
+  function stopDriving() {
+    if (timer !== null) {
+      clearInterval(timer);
+      timer = null;
+      btn.textContent = "Drive";
+    }
+  }
+
+  btn.addEventListener("click", () => {
+    if (timer !== null) {
+      stopDriving();
+      return;
+    }
+    btn.textContent = "Stop";
+    timer = setInterval(() => {
+      const next = Number(range.value) + 1;
+      if (next >= total) {
+        stopDriving();
+        return;
+      }
+      range.value = String(next);
+      render(next);
+    }, 350);
+  });
+</script>
