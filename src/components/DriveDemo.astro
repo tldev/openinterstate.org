@@ -124,18 +124,15 @@ const exitCount = demo.exits.length;
     return ((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2) * (1 << z) * TILE;
   }
 
-  function renderMap(i: number) {
-    const W = mapBox.clientWidth;
-    const H = mapBox.clientHeight;
-    overlay.setAttribute("viewBox", `0 0 ${W} ${H}`);
-
+  // Zoom and origin that fit an exit's points into a W x H window, plus the
+  // tiles that view needs. Shared by rendering and next-tile prefetch.
+  function computeView(i: number, W: number, H: number) {
     const e = exits[i];
-    const pts = [{ lat: e.ll[0], lon: e.ll[1], min: 0, isExit: true }];
+    const pts = [{ lat: e.ll[0], lon: e.ll[1], min: 0 }];
     for (const [, , min, dlat, dlon] of e.p) {
-      pts.push({ lat: e.ll[0] + dlat / 1e4, lon: e.ll[1] + dlon / 1e4, min, isExit: false });
+      pts.push({ lat: e.ll[0] + dlat / 1e4, lon: e.ll[1] + dlon / 1e4, min });
     }
 
-    // Pick the deepest zoom that fits every point with padding.
     let z = 15;
     for (; z > 11; z--) {
       const xs = pts.map((p) => worldX(p.lon, z));
@@ -145,23 +142,44 @@ const exitCount = demo.exits.length;
 
     const xs = pts.map((p) => worldX(p.lon, z));
     const ys = pts.map((p) => worldY(p.lat, z));
-    const cx = (Math.max(...xs) + Math.min(...xs)) / 2;
-    const cy = (Math.max(...ys) + Math.min(...ys)) / 2;
-    const originX = cx - W / 2;
-    const originY = cy - H / 2;
+    const originX = (Math.max(...xs) + Math.min(...xs)) / 2 - W / 2;
+    const originY = (Math.max(...ys) + Math.min(...ys)) / 2 - H / 2;
 
-    // Tiles covering the window.
-    let tiles = "";
+    const tiles: { url: string; left: number; top: number }[] = [];
     const maxTile = (1 << z) - 1;
     for (let tx = Math.floor(originX / TILE); tx <= Math.floor((originX + W) / TILE); tx++) {
       for (let ty = Math.max(0, Math.floor(originY / TILE)); ty <= Math.min(maxTile, Math.floor((originY + H) / TILE)); ty++) {
-        const left = tx * TILE - originX;
-        const top = ty * TILE - originY;
         const wrapped = ((tx % (1 << z)) + (1 << z)) % (1 << z);
-        tiles += `<img src="https://tile.openstreetmap.org/${z}/${wrapped}/${ty}.png" alt="" style="left:${left}px;top:${top}px" decoding="async">`;
+        tiles.push({
+          url: `https://tile.openstreetmap.org/${z}/${wrapped}/${ty}.png`,
+          left: tx * TILE - originX,
+          top: ty * TILE - originY,
+        });
       }
     }
-    tilesEl.innerHTML = tiles;
+    return { pts, z, originX, originY, tiles };
+  }
+
+  // Warm the next exit's tiles into the browser cache so advancing the
+  // drive never flashes an empty map.
+  function prefetchTiles(i: number) {
+    if (i < 0 || i >= total) return;
+    for (const t of computeView(i, mapBox.clientWidth, mapBox.clientHeight).tiles) {
+      new Image().src = t.url;
+    }
+  }
+
+  function renderMap(i: number) {
+    const W = mapBox.clientWidth;
+    const H = mapBox.clientHeight;
+    overlay.setAttribute("viewBox", `0 0 ${W} ${H}`);
+
+    const e = exits[i];
+    const { pts, z, originX, originY, tiles } = computeView(i, W, H);
+
+    tilesEl.innerHTML = tiles
+      .map((t) => `<img src="${t.url}" alt="" style="left:${t.left}px;top:${t.top}px" decoding="async">`)
+      .join("");
 
     // Overlay: exit dot, connectors, place dots, minute labels.
     const px = (lon: number) => worldX(lon, z) - originX;
@@ -264,6 +282,7 @@ const exitCount = demo.exits.length;
         : `<div class="drive-row drive-none">No scored services ahead. You have reached the end of the corridor.</div>`;
     }
     renderMap(i);
+    prefetchTiles(i + 1);
   }
 
   // Start in the early middle of the corridor, at an exit rich enough to
@@ -302,7 +321,7 @@ const exitCount = demo.exits.length;
       }
       range.value = String(next);
       render(next);
-    }, 1600);
+    }, 2400);
   }
 
   function stopDriving() {
