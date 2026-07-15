@@ -89,7 +89,14 @@ function* rows(path) {
 const exits = [];
 for (const r of rows(join(csvDir, "corridor_exits.csv"))) {
   if (r.interstate_name === INTERSTATE && r.direction_code === DIRECTION) {
-    exits.push({ id: r.exit_id, seq: Number(r.sequence_index), n: r.exit_number, name: r.exit_name });
+    exits.push({
+      id: r.exit_id,
+      seq: Number(r.sequence_index),
+      n: r.exit_number,
+      name: r.exit_name,
+      lat: Number(r.lat),
+      lon: Number(r.lon),
+    });
   }
 }
 exits.sort((a, b) => a.seq - b.seq);
@@ -123,11 +130,23 @@ const places = new Map();
 for (const r of rows(join(csvDir, "places.csv"))) {
   if (neededPlaces.has(r.place_id)) {
     const label = r.display_name || r.brand || r.name;
-    if (label) places.set(r.place_id, { label, cat: CATEGORY_LABELS[r.category] || r.category });
+    if (!label) continue;
+    let lat = null;
+    let lon = null;
+    try {
+      const geom = JSON.parse(r.geometry_geojson);
+      if (geom.type === "Point") [lon, lat] = geom.coordinates;
+    } catch {
+      continue;
+    }
+    if (lat === null) continue;
+    places.set(r.place_id, { label, cat: CATEGORY_LABELS[r.category] || r.category, lat, lon });
   }
 }
 
 // 5. Assemble: top places per exit by score, deduped by label.
+// Place coordinates ship as integer deltas from the exit in 1e-4 degrees
+// (about 11 m of precision) to keep the payload small.
 const out = [];
 let withServices = 0;
 for (const e of exits) {
@@ -143,9 +162,22 @@ for (const e of exits) {
     scored.push({ ...place, ...hit });
   }
   scored.sort((a, b) => b.score - a.score || a.min - b.min);
-  const top = scored.slice(0, 3).map((p) => [p.label, p.cat, p.min]);
+  const top = scored
+    .slice(0, 3)
+    .map((p) => [
+      p.label,
+      p.cat,
+      p.min,
+      Math.round((p.lat - e.lat) * 1e4),
+      Math.round((p.lon - e.lon) * 1e4),
+    ]);
   if (top.length > 0) withServices++;
-  out.push({ n: e.n, name: e.name, p: top });
+  out.push({
+    n: e.n,
+    name: e.name,
+    ll: [Number(e.lat.toFixed(5)), Number(e.lon.toFixed(5))],
+    p: top,
+  });
 }
 console.log(`exits with scored services: ${withServices}/${out.length}`);
 

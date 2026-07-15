@@ -19,8 +19,15 @@ const exitCount = demo.exits.length;
     aria-label={`Position along ${demo.interstate} ${demo.direction}`}
   />
   <div class="drive-panel">
-    <div class="drive-exit" id="drive-exit">EXIT</div>
-    <div class="drive-services" id="drive-services"></div>
+    <div class="drive-info">
+      <div class="drive-exit" id="drive-exit">EXIT</div>
+      <div class="drive-services" id="drive-services"></div>
+    </div>
+    <div class="drive-map" role="img" aria-label="OpenStreetMap view of places reachable from this exit">
+      <div class="drive-tiles" id="drive-tiles"></div>
+      <svg class="drive-overlay" id="drive-overlay" viewBox="0 0 240 200"></svg>
+      <a class="drive-attrib" href="https://www.openstreetmap.org/copyright">&copy; OpenStreetMap</a>
+    </div>
   </div>
   <div class="drive-foot">
     <button type="button" class="drive-btn" id="drive-btn">Drive</button>
@@ -34,19 +41,132 @@ const exitCount = demo.exits.length;
 <script type="application/json" id="drive-data" set:html={JSON.stringify(demo.exits)} />
 
 <script>
-  const exits = JSON.parse(document.getElementById("drive-data")!.textContent!);
+  type Place = [string, string, number, number, number];
+  type Exit = { n: string; name: string; ll: [number, number]; p: Place[] };
+
+  const exits: Exit[] = JSON.parse(document.getElementById("drive-data")!.textContent!);
   const range = document.getElementById("drive-range") as HTMLInputElement;
   const pos = document.getElementById("drive-pos")!;
   const exitEl = document.getElementById("drive-exit")!;
   const services = document.getElementById("drive-services")!;
+  const tilesEl = document.getElementById("drive-tiles")!;
+  const overlay = document.getElementById("drive-overlay")!;
   const btn = document.getElementById("drive-btn") as HTMLButtonElement;
 
   const total = exits.length;
+  const W = 240;
+  const H = 200;
+  const TILE = 256;
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  function exitLabel(e: { n: string; name: string }) {
+  function exitLabel(e: Exit) {
     if (e.n) return `EXIT ${e.n}`;
     if (e.name) return e.name.toUpperCase();
     return "UNNUMBERED EXIT";
+  }
+
+  function escapeHtml(s: string) {
+    return s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+  }
+
+  // Web Mercator world pixels at zoom z.
+  function worldX(lon: number, z: number) {
+    return ((lon + 180) / 360) * (1 << z) * TILE;
+  }
+  function worldY(lat: number, z: number) {
+    const r = (lat * Math.PI) / 180;
+    return ((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2) * (1 << z) * TILE;
+  }
+
+  function renderMap(i: number) {
+    const e = exits[i];
+    const pts = [{ lat: e.ll[0], lon: e.ll[1], min: 0, isExit: true }];
+    for (const [, , min, dlat, dlon] of e.p) {
+      pts.push({ lat: e.ll[0] + dlat / 1e4, lon: e.ll[1] + dlon / 1e4, min, isExit: false });
+    }
+
+    // Pick the deepest zoom that fits every point with padding.
+    let z = 15;
+    for (; z > 11; z--) {
+      const xs = pts.map((p) => worldX(p.lon, z));
+      const ys = pts.map((p) => worldY(p.lat, z));
+      if (Math.max(...xs) - Math.min(...xs) <= W - 48 && Math.max(...ys) - Math.min(...ys) <= H - 48) break;
+    }
+
+    const xs = pts.map((p) => worldX(p.lon, z));
+    const ys = pts.map((p) => worldY(p.lat, z));
+    const cx = (Math.max(...xs) + Math.min(...xs)) / 2;
+    const cy = (Math.max(...ys) + Math.min(...ys)) / 2;
+    const originX = cx - W / 2;
+    const originY = cy - H / 2;
+
+    // Tiles covering the window.
+    let tiles = "";
+    const maxTile = (1 << z) - 1;
+    for (let tx = Math.floor(originX / TILE); tx <= Math.floor((originX + W) / TILE); tx++) {
+      for (let ty = Math.max(0, Math.floor(originY / TILE)); ty <= Math.min(maxTile, Math.floor((originY + H) / TILE)); ty++) {
+        const left = tx * TILE - originX;
+        const top = ty * TILE - originY;
+        const wrapped = ((tx % (1 << z)) + (1 << z)) % (1 << z);
+        tiles += `<img src="https://tile.openstreetmap.org/${z}/${wrapped}/${ty}.png" alt="" style="left:${left}px;top:${top}px" decoding="async">`;
+      }
+    }
+    tilesEl.innerHTML = tiles;
+
+    // Overlay: exit dot, connectors, place dots, minute labels.
+    const px = (lon: number) => worldX(lon, z) - originX;
+    const py = (lat: number) => worldY(lat, z) - originY;
+    const x1 = px(e.ll[1]);
+    const y1 = py(e.ll[0]);
+
+    let svg = "";
+    const labels: { x: number; y: number; anchor: string; text: string; order: number }[] = [];
+    pts.slice(1).forEach((p, idx) => {
+      const x2 = px(p.lon);
+      const y2 = py(p.lat);
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const len = Math.hypot(dx, dy) || 1;
+      const cxq = (x1 + x2) / 2 - (dy / len) * len * 0.18;
+      const cyq = (y1 + y2) / 2 + (dx / len) * len * 0.18;
+      svg += `<path class="drive-conn" data-order="${idx}" d="M ${x1.toFixed(1)} ${y1.toFixed(1)} Q ${cxq.toFixed(1)} ${cyq.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}" />`;
+      svg += `<circle class="drive-poi" data-order="${idx}" cx="${x2.toFixed(1)}" cy="${y2.toFixed(1)}" r="3" />`;
+      labels.push({
+        x: x2 + (x2 >= x1 ? 7 : -7),
+        y: y2 + 3,
+        anchor: x2 >= x1 ? "start" : "end",
+        text: `${p.min} min`,
+        order: idx,
+      });
+    });
+
+    for (const side of ["start", "end"]) {
+      const group = labels.filter((l) => l.anchor === side).sort((a, b) => a.y - b.y);
+      for (let g = 1; g < group.length; g++) {
+        if (group[g].y - group[g - 1].y < 11) group[g].y = group[g - 1].y + 11;
+      }
+    }
+    for (const l of labels) {
+      svg += `<text class="drive-map-min" data-order="${l.order}" x="${l.x.toFixed(1)}" y="${l.y.toFixed(1)}" text-anchor="${l.anchor}">${l.text}</text>`;
+    }
+
+    svg += `<circle class="drive-here" cx="${x1.toFixed(1)}" cy="${y1.toFixed(1)}" r="4.5" />`;
+    overlay.innerHTML = svg;
+
+    if (!reducedMotion) {
+      overlay.querySelectorAll<SVGPathElement>(".drive-conn").forEach((path) => {
+        const order = Number(path.dataset.order);
+        const length = path.getTotalLength();
+        path.style.strokeDasharray = String(length);
+        path.style.strokeDashoffset = String(length);
+        path.style.animation = `drive-draw 0.38s ease-out ${order * 110}ms forwards`;
+      });
+      overlay.querySelectorAll<SVGElement>(".drive-poi, .drive-map-min").forEach((el) => {
+        const order = Number(el.dataset.order);
+        el.style.opacity = "0";
+        el.style.animation = `drive-pop 0.2s ease-out ${order * 110 + 300}ms forwards`;
+      });
+    }
   }
 
   function render(i: number) {
@@ -56,7 +176,7 @@ const exitCount = demo.exits.length;
     if (e.p.length > 0) {
       services.innerHTML = e.p
         .map(
-          ([label, cat, min]: [string, string, number]) =>
+          ([label, cat, min]) =>
             `<div class="drive-row"><span class="drive-cat">${escapeHtml(cat)}</span><span class="drive-place">${escapeHtml(label)}</span><span class="drive-min">${min} min</span></div>`
         )
         .join("");
@@ -72,10 +192,7 @@ const exitCount = demo.exits.length;
         ? `<div class="drive-row drive-none">No scored services here. Next services: ${escapeHtml(exitLabel(exits[i + ahead]).toLowerCase())}, ${ahead} exit${ahead === 1 ? "" : "s"} ahead.</div>`
         : `<div class="drive-row drive-none">No scored services ahead. You have reached the end of the corridor.</div>`;
     }
-  }
-
-  function escapeHtml(s: string) {
-    return s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+    renderMap(i);
   }
 
   // Start somewhere with a full card so the first impression is rich.
@@ -118,6 +235,6 @@ const exitCount = demo.exits.length;
       }
       range.value = String(next);
       render(next);
-    }, 350);
+    }, 800);
   });
 </script>
