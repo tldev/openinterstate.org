@@ -270,7 +270,7 @@ li {
 
 /* table-of-contents rail (data page) */
 
-h2[id], h3[id] {
+h2[id], h3[id], section[id] {
   scroll-margin-top: 1.5rem;
 }
 
