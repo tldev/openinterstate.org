@@ -137,6 +137,37 @@ import mapData from "../data/interstate-map.json";
       card.classList.remove('visible');
     }
 
+    const routes = [];
+
+    function reveal(route, P, dur) {
+      if (route.raf) cancelAnimationFrame(route.raf);
+      if (route.fadeTimer) clearTimeout(route.fadeTimer);
+      const { hl, L } = route;
+      const maxW = 2 * Math.max(P, L - P);
+      const t0 = performance.now();
+      hl.style.transition = 'none';
+      hl.style.opacity = '0.6';
+      (function tick(now) {
+        const p = Math.min(1, (now - t0) / dur);
+        const ease = 1 - (1 - p) ** 3;
+        const w = ease * maxW;
+        const s = Math.max(0, P - w / 2);
+        const end = Math.min(L, P + w / 2);
+        hl.style.strokeDasharray = `${end - s} ${L}`;
+        hl.style.strokeDashoffset = `${-s}`;
+        if (p < 1) route.raf = requestAnimationFrame(tick);
+      })(t0);
+    }
+
+    function fade(route) {
+      if (route.raf) cancelAnimationFrame(route.raf);
+      route.hl.style.transition = 'opacity 0.3s';
+      route.hl.style.opacity = '0';
+      route.fadeTimer = setTimeout(() => {
+        route.hl.style.strokeDasharray = `0 ${route.L}`;
+      }, 300);
+    }
+
     document.querySelectorAll('[data-route]').forEach(g => {
       const paths = g.querySelectorAll('path');
       const hl = paths[2];
@@ -147,52 +178,95 @@ import mapData from "../data/interstate-map.json";
       hl.style.strokeDasharray = `0 ${L}`;
       hl.style.strokeDashoffset = '0';
 
-      let raf = null;
-      let fadeTimer = null;
+      const route = { g, hl, L, raf: null, fadeTimer: null };
+      routes[idx] = route;
 
       g.addEventListener('mouseenter', e => {
-        if (raf) cancelAnimationFrame(raf);
-        if (fadeTimer) clearTimeout(fadeTimer);
-
+        stopAttract();
         const ctm = svg.getScreenCTM();
         if (!ctm) return;
         const pt = svg.createSVGPoint();
         pt.x = e.clientX;
         pt.y = e.clientY;
         const sp = pt.matrixTransform(ctm.inverse());
-
-        const P = nearest(hl, sp, L);
-        const maxW = 2 * Math.max(P, L - P);
-        const dur = 1200;
-        const t0 = performance.now();
-
         showCard(idx, getRouteStates(hl, L));
-
-        hl.style.transition = 'none';
-        hl.style.opacity = '0.6';
-
-        (function tick(now) {
-          const p = Math.min(1, (now - t0) / dur);
-          const ease = 1 - (1 - p) ** 3;
-          const w = ease * maxW;
-          const s = Math.max(0, P - w / 2);
-          const end = Math.min(L, P + w / 2);
-          hl.style.strokeDasharray = `${end - s} ${L}`;
-          hl.style.strokeDashoffset = `${-s}`;
-          if (p < 1) raf = requestAnimationFrame(tick);
-        })(t0);
+        reveal(route, nearest(hl, sp, L), 1200);
       });
 
       g.addEventListener('mouseleave', () => {
-        if (raf) cancelAnimationFrame(raf);
-        hl.style.transition = 'opacity 0.2s';
-        hl.style.opacity = '0';
-        fadeTimer = setTimeout(() => {
-          hl.style.strokeDasharray = `0 ${L}`;
-        }, 200);
+        fade(route);
         hideCard();
       });
     });
+
+    // Attract mode: while nobody is pointing at the map, slowly light up a
+    // random interstate and show its card. First hover hands over control;
+    // ambient cycling resumes a while after the pointer leaves.
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let attractTimer = null;
+    let resumeTimer = null;
+    let ambientIdx = -1;
+    let mapVisible = false;
+
+    function clearAmbient() {
+      if (ambientIdx >= 0 && routes[ambientIdx]) {
+        routes[ambientIdx].g.classList.remove('ambient');
+        fade(routes[ambientIdx]);
+        hideCard();
+      }
+      ambientIdx = -1;
+    }
+
+    function attractStep() {
+      const prev = ambientIdx;
+      clearAmbient();
+      let idx = Math.floor(Math.random() * routes.length);
+      if (routes.length > 1 && idx === prev) idx = (idx + 1) % routes.length;
+      const route = routes[idx];
+      if (!route) return;
+      ambientIdx = idx;
+      route.g.classList.add('ambient');
+      showCard(idx, getRouteStates(route.hl, route.L));
+      reveal(route, route.L * (0.25 + Math.random() * 0.5), 2600);
+    }
+
+    function startAttract() {
+      if (attractTimer || reducedMotion || !mapVisible || document.hidden) return;
+      attractStep();
+      attractTimer = setInterval(attractStep, 5200);
+    }
+
+    function stopAttract() {
+      if (resumeTimer) clearTimeout(resumeTimer);
+      if (attractTimer) {
+        clearInterval(attractTimer);
+        attractTimer = null;
+      }
+      clearAmbient();
+    }
+
+    svg.addEventListener('pointerenter', () => {
+      stopAttract();
+    });
+
+    svg.addEventListener('pointerleave', () => {
+      if (resumeTimer) clearTimeout(resumeTimer);
+      resumeTimer = setTimeout(startAttract, 8000);
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stopAttract();
+      else if (mapVisible) startAttract();
+    });
+
+    const io = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        mapVisible = entry.isIntersecting;
+        if (mapVisible) startAttract();
+        else stopAttract();
+      }
+    }, { threshold: 0.3 });
+    io.observe(svg);
   }
 
   function nearest(path, pt, L) {
@@ -233,7 +307,8 @@ import mapData from "../data/interstate-map.json";
     transition: opacity 0.2s, fill 0.2s;
   }
 
-  [data-route]:hover text {
+  [data-route]:hover text,
+  [data-route].ambient text {
     opacity: 1;
     fill: #171717;
   }
