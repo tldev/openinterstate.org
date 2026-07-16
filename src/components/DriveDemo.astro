@@ -74,13 +74,16 @@ const exitCount = demo.exits.length;
   </symbol>
 </svg>
 
-<script type="application/json" id="drive-data" set:html={JSON.stringify(demo.exits)} />
+<script type="application/json" id="drive-data" set:html={JSON.stringify({ exits: demo.exits, start: demo.start ?? null })} />
 
 <script>
   type Place = [string, string, number, number, number];
   type Exit = { n: string; name: string; ll: [number, number]; p: Place[] };
 
-  const exits: Exit[] = JSON.parse(document.getElementById("drive-data")!.textContent!);
+  const driveData: { exits: Exit[]; start: number | null } = JSON.parse(
+    document.getElementById("drive-data")!.textContent!
+  );
+  const exits = driveData.exits;
   const range = document.getElementById("drive-range") as HTMLInputElement;
   const pos = document.getElementById("drive-pos")!;
   const exitEl = document.getElementById("drive-exit")!;
@@ -285,13 +288,16 @@ const exitCount = demo.exits.length;
     prefetchTiles(i + 1);
   }
 
-  // Start in the early middle of the corridor, at an exit rich enough to
-  // make a good first card.
-  let start = Math.floor(total * 0.28);
-  for (let i = start; i < total; i++) {
-    if (exits[i].p.length >= 5) {
-      start = i;
-      break;
+  // Start where the data says to; otherwise pick a rich exit in the early
+  // middle of the corridor.
+  let start = driveData.start ?? 0;
+  if (driveData.start === null) {
+    start = Math.floor(total * 0.28);
+    for (let i = start; i < total; i++) {
+      if (exits[i].p.length >= 5) {
+        start = i;
+        break;
+      }
     }
   }
   range.value = String(start);

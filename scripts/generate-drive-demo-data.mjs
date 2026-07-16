@@ -6,7 +6,11 @@
  * OpenInterstate release with reachability.csv from a reachability release.
  *
  * Usage: node scripts/generate-drive-demo-data.mjs <release-csv-dir> <reachability.csv> \
- *          [--interstate I-90] [--direction east] [--release <tag>] [--score-release <tag>]
+ *          [--interstate I-90] [--direction east] [--release <tag>] [--score-release <tag>] \
+ *          [--start-near lat,lon]
+ *
+ * --start-near picks the demo's starting exit: the one closest to the given
+ * point, nudged forward to the next exit with services if needed.
  */
 
 import { readFileSync, writeFileSync } from "fs";
@@ -181,11 +185,34 @@ for (const e of exits) {
 }
 console.log(`exits with scored services: ${withServices}/${out.length}`);
 
+let startIndex = null;
+const startNear = opt("start-near", "");
+if (startNear) {
+  const [nearLat, nearLon] = startNear.split(",").map(Number);
+  let bestDist = Infinity;
+  exits.forEach((e, idx) => {
+    const d = (e.lat - nearLat) ** 2 + (e.lon - nearLon) ** 2;
+    if (d < bestDist) {
+      bestDist = d;
+      startIndex = idx;
+    }
+  });
+  // Nudge forward to the first nearby exit with a rich card.
+  for (let idx = startIndex; idx < Math.min(startIndex + 8, out.length); idx++) {
+    if (out[idx].p.length >= 3) {
+      startIndex = idx;
+      break;
+    }
+  }
+  console.log(`start: index ${startIndex} (exit ${out[startIndex].n || "?"}) near ${startNear}`);
+}
+
 const payload = {
   interstate: INTERSTATE,
   direction: DIRECTION === "east" ? "eastbound" : DIRECTION === "west" ? "westbound" : `${DIRECTION}bound`,
   release: RELEASE,
   scoreRelease: SCORE_RELEASE,
+  start: startIndex,
   exits: out,
 };
 
